@@ -1,0 +1,64 @@
+name: Sync with Reece's repo
+
+# Two-way sync between this fork (deployed on Vercel) and reecemusic/Website_Git.
+# - Changes pushed here go live on Vercel at once and are copied to Reece's repo straight away.
+# - Changes Reece makes in his own repo are pulled in every ~5 minutes (or press "Run workflow").
+#
+# Needs one secret in THIS fork: REECE_REPO_TOKEN = a classic personal access token from the
+# breadywebstudios account (scopes: repo, workflow). Without it, only the pull direction runs.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reece-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # Only run in the fork, never in Reece's repo after this file is copied there.
+    if: github.repository == 'joannavarro57-stack/Website_Git'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Bring in Reece's changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/reecemusic/Website_Git.git
+          git fetch upstream main
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "Fork already has everything from Reece's repo."
+          else
+            git merge --no-edit -m "Sync from reecemusic/Website_Git" upstream/main
+            git push origin HEAD:main
+            echo "Pulled in Reece's changes; Vercel will redeploy."
+          fi
+
+      - name: Send this fork's changes to Reece's repo
+        env:
+          REECE_TOKEN: ${{ secrets.REECE_REPO_TOKEN }}
+        run: |
+          if [ -z "$REECE_TOKEN" ]; then
+            echo "::notice::REECE_REPO_TOKEN is not set, so changes stay in the fork only."
+            exit 0
+          fi
+          if git merge-base --is-ancestor HEAD upstream/main; then
+            echo "Reece's repo is already up to date."
+          else
+            # Clear the fork's own login (added by actions/checkout) so the push uses REECE_TOKEN.
+            git -c http.https://github.com/.extraheader= \
+              push "https://x-access-token:${REECE_TOKEN}@github.com/reecemusic/Website_Git.git" HEAD:main
+            echo "Copied the fork's changes to reecemusic/Website_Git."
+          fi
