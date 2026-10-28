@@ -3888,6 +3888,15 @@ a:hover {
   grid-area: copy;
   width: 100%;
   max-width: none;
+  text-align: center;
+}
+
+.hero-copy h1 {
+  justify-content: center;
+}
+
+.hero-copy .lede {
+  margin-inline: auto;
 }
 
 .hero-side-column {
@@ -3980,6 +3989,11 @@ a:hover {
   gap: clamp(0.5rem, 1.2vw, 1rem);
   width: 100%;
   margin-top: 1.25rem;
+  justify-self: center;
+}
+
+.hero-copy .hero-actions {
+  justify-content: center;
 }
 
 .hero-video-row .hero-video {
