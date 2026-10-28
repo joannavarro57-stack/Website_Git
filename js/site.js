@@ -220,14 +220,14 @@
       .catch(function () { fail("Check your connection and refresh this page. Your payment is safe."); });
   }
 
-  /* ---------- painting viewer ---------- */
+  /* ---------- digital art viewer ---------- */
   var box = document.getElementById("art-viewer");
   if (box && typeof box.showModal === "function") {
     var bImg = box.querySelector("img");
     var bTitle = box.querySelector("h3");
     var bPrice = box.querySelector("[data-price]");
     var bBuy = box.querySelector("[data-buy]");
-    var artType = box.getAttribute("data-art-type") || "painting";
+    var artType = box.getAttribute("data-art-type") || "digital artwork";
     document.querySelectorAll("[data-art]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var t = btn.getAttribute("data-title");
@@ -235,7 +235,7 @@
         bImg.alt = t + ", " + artType + " by Reece Music";
         bTitle.textContent = t;
         bPrice.textContent = btn.getAttribute("data-price");
-        bBuy.href = buyLink(t, btn.getAttribute("data-price"), artType);
+        bBuy.href = buyLink(t, btn.getAttribute("data-price"));
         box.showModal();
       });
     });
@@ -246,11 +246,9 @@
     a.href = buyLink(a.getAttribute("data-buy-title"), a.getAttribute("data-buy-price"));
   });
 
-  function buyLink(title, price, artType) {
-    var isDigital = artType === "digital artwork";
-    var details = isDigital ? "Name:\nEmail:" : "Name:\nCity / delivery address:";
-    return "mailto:" + email + "?subject=" + encodeURIComponent((isDigital ? "Digital artwork: " : "Painting: ") + title) +
-      "&body=" + encodeURIComponent("Hi Reece,\n\nI'd like to buy \"" + title + "\" (" + price + ").\n\n" + details + "\n\nThanks!");
+  function buyLink(title, price) {
+    return "mailto:" + email + "?subject=" + encodeURIComponent("Digital artwork: " + title) +
+      "&body=" + encodeURIComponent("Hi Reece,\n\nI'd like to buy \"" + title + "\" (" + price + ").\n\nName:\nEmail:\n\nThanks!");
   }
 
   /* ---------- forms: contact.php when available, otherwise a pre-filled email ---------- */
