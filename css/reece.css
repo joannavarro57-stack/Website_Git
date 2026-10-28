@@ -338,3 +338,23 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .song-prices { color: var(--brass); font-size: .92rem; font-variant-numeric: tabular-nums; }
 .midi-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px 32px; margin-top: 32px; }
 .midi-foot p { margin: 0; }
+
+/* ---------- MIDI store pages ---------- */
+.steps { list-style: none; padding: 0; grid-template-columns: repeat(3, 1fr); counter-reset: step; }
+.steps li { padding: 20px 20px 4px 0; counter-increment: step; }
+.steps li + li { border-left: 1px solid var(--line); padding-left: 20px; }
+.steps li strong { font-family: var(--display); font-weight: 400; font-size: 1.25rem; display: block; margin-bottom: 6px; }
+.steps li strong::before { content: counter(step) ". "; color: var(--brass); }
+.steps li span { color: var(--steel); font-size: .95rem; }
+@media (max-width: 760px) { .steps { grid-template-columns: 1fr; } .steps li + li { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); } }
+
+.song-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: start; }
+@media (max-width: 900px) { .song-layout { grid-template-columns: 1fr; } }
+.tiers { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--brass-deep); }
+.tiers li { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.tiers li > div strong { font-family: var(--display); font-weight: 400; font-size: 1.3rem; display: block; }
+.tiers li > div span { font-size: .92rem; }
+.tier-price { color: var(--brass); font-size: 1.2rem; font-variant-numeric: tabular-nums; text-align: right; }
+.tiers li .btn { grid-column: 1 / -1; justify-self: start; padding: 11px 22px; font-size: .95rem; }
+.tiers li.is-featured strong { color: var(--brass); }
+.btn:disabled { opacity: .6; cursor: progress; }
