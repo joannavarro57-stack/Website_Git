@@ -57,6 +57,8 @@ jobs:
           if git merge-base --is-ancestor HEAD upstream/main; then
             echo "Reece's repo is already up to date."
           else
-            git push "https://x-access-token:${REECE_TOKEN}@github.com/reecemusic/Website_Git.git" HEAD:main
+            # Clear the fork's own login (added by actions/checkout) so the push uses REECE_TOKEN.
+            git -c http.https://github.com/.extraheader= \
+              push "https://x-access-token:${REECE_TOKEN}@github.com/reecemusic/Website_Git.git" HEAD:main
             echo "Copied the fork's changes to reecemusic/Website_Git."
           fi
