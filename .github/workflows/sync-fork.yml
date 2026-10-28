@@ -1,0 +1,18 @@
+name: Sync fork
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes (GitHub's minimum)
+  workflow_dispatch:         # adds a "Run now" button
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy new changes from the original repo
+        run: gh api repos/${{ github.repository }}/merge-upstream -f branch=main
+        env:
+          GH_TOKEN: ${{ github.token }}
