@@ -200,6 +200,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
   display: block; width: 100%; padding: 10px; background: var(--ivory); border: 0; cursor: zoom-in;
   box-shadow: 0 18px 40px rgba(3,8,22,.45);
 }
+.art-frame picture { display: block; }
 .art-frame img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; background: #d9d4c8; }
 .art figcaption { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; align-items: baseline; }
 .art-title { font-family: var(--display); font-size: 1.15rem; line-height: 1.2; }
