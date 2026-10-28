@@ -3872,13 +3872,10 @@ a:hover {
 
 .hero-photo .hero-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2.2fr) minmax(340px, 1fr);
-  grid-template-areas:
-    "copy side"
-    "videos side";
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 1fr);
+  grid-template-areas: "copy side";
   align-items: stretch;
-  column-gap: clamp(2rem, 4vw, 3.5rem);
-  row-gap: 0;
+  column-gap: 1rem;
   width: min(1400px, calc(100% - 3rem));
   min-height: 0;
   margin: 0 auto;
@@ -3902,7 +3899,7 @@ a:hover {
 .hero-side-column {
   grid-area: side;
   width: min(100%, 400px);
-  justify-self: center;
+  justify-self: start;
   align-self: stretch;
   display: flex;
   flex-direction: column;
@@ -4023,9 +4020,8 @@ a:hover {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "copy"
-      "videos"
       "side";
-    row-gap: 2rem;
+    row-gap: 1rem;
     width: min(var(--max), calc(100% - 1.5rem));
   }
 
