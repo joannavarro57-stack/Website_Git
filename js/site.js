@@ -220,6 +220,14 @@
       .catch(function () { fail("Check your connection and refresh this page. Your payment is safe."); });
   }
 
+  /* ---------- discourage saving artwork (the watermark is baked into the files) ---------- */
+  document.addEventListener("contextmenu", function (e) {
+    if (e.target.closest && e.target.closest(".art-frame, .lightbox")) e.preventDefault();
+  });
+  document.addEventListener("dragstart", function (e) {
+    if (e.target.closest && e.target.closest(".art-frame, .lightbox")) e.preventDefault();
+  });
+
   /* ---------- digital art viewer ---------- */
   var box = document.getElementById("art-viewer");
   if (box && typeof box.showModal === "function") {

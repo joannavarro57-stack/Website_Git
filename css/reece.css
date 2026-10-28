@@ -358,3 +358,8 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .tiers li .btn { grid-column: 1 / -1; justify-self: start; padding: 11px 22px; font-size: .95rem; }
 .tiers li.is-featured strong { color: var(--brass); }
 .btn:disabled { opacity: .6; cursor: progress; }
+
+/* ---------- artwork protection (light deterrent; the watermark is in the files) ---------- */
+.art-frame img, .lightbox img {
+  -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
