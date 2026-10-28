@@ -109,40 +109,133 @@
     }
   }
 
-  /* ---------- MIDI songs (Gigs page) ---------- */
-  var midiGrid = document.getElementById("midi-songs");
-  if (midiGrid) {
-    var money = function (c) { return c == null ? "" : "$" + (c / 100).toFixed(c % 100 ? 2 : 0); };
-    fetch("/api/midi-songs", { headers: { Accept: "application/json" } })
-      .then(function (r) { return r.json(); })
+  /* ---------- MIDI store: song lists, song page, purchase page ---------- */
+  var money = function (c) { return c == null ? "" : "$" + (c / 100).toFixed(c % 100 ? 2 : 0); };
+  var songHref = function (id) { return "song.html?id=" + encodeURIComponent(id); };
+  var safeYt = function (id) { return /^[A-Za-z0-9_-]{11}$/.test(id || "") ? id : ""; };
+
+  var midiLists = document.querySelectorAll("[data-midi-list]");
+  if (midiLists.length) {
+    fetch("/api/midi/songs", { headers: { Accept: "application/json" } })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (data) {
         var songs = (data && data.songs) || [];
-        if (!songs.length) { midiGrid.hidden = true; return; }
-        midiGrid.innerHTML = songs.map(function (s) {
-          var prices = ["Free preview"];
-          if (s.chorus != null) prices.push(money(s.chorus) + " chorus");
-          if (s.full != null) prices.push(money(s.full) + " full song");
-          return '<article class="record">' +
-            '<div class="disc" aria-hidden="true"></div>' +
-            "<h3>" + escapeHtml(s.title) + "</h3>" +
-            '<span class="muted song-artist">' + escapeHtml(s.artist) + "</span>" +
-            "<p>" + escapeHtml(s.description) + "</p>" +
-            '<span class="song-prices">' + escapeHtml(prices.join(", ")) + "</span>" +
-            '<div class="btn-row"><a class="btn btn-brass" href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener">Get the MIDI</a></div>' +
-          "</article>";
-        }).join("");
+        midiLists.forEach(function (list) {
+          if (!songs.length) { list.innerHTML = '<p class="muted">New songs are on the way. Check back soon.</p>'; return; }
+          list.innerHTML = songs.map(function (s) {
+            return '<article class="record">' +
+              '<div class="disc" aria-hidden="true"></div>' +
+              "<h3>" + escapeHtml(s.title) + "</h3>" +
+              '<span class="muted song-artist">' + escapeHtml(s.artist) + "</span>" +
+              "<p>" + escapeHtml(s.description) + "</p>" +
+              '<span class="song-prices">Free preview, ' + money(s.tiers.chorus.price) + " chorus, " + money(s.tiers.full.price) + " full song</span>" +
+              '<div class="btn-row"><a class="btn btn-brass" href="' + songHref(s.id) + '">Get the MIDI</a></div>' +
+            "</article>";
+          }).join("");
+        });
       })
-      .catch(function () { midiGrid.hidden = true; });
+      .catch(function () {
+        midiLists.forEach(function (list) { list.innerHTML = '<p class="muted">Songs couldn\'t load just now. Refresh the page to try again.</p>'; });
+      });
   }
 
-  /* ---------- painting viewer ---------- */
+  function startCheckout(id, tier, btn, statusEl) {
+    btn.disabled = true;
+    statusEl.textContent = "Opening secure checkout…";
+    fetch("/api/midi/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: id, tier: tier }) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.url) { window.location.href = data.url; return; }
+        statusEl.textContent = (data && data.error) || "Checkout couldn't start. Please try again.";
+        btn.disabled = false;
+      })
+      .catch(function () { statusEl.textContent = "Checkout couldn't start. Check your connection and try again."; btn.disabled = false; });
+  }
+
+  var songRoot = document.querySelector("[data-song-page]");
+  if (songRoot) {
+    var songId = new URLSearchParams(location.search).get("id");
+    var notFound = function () {
+      songRoot.innerHTML = '<section class="page-hero" style="border:0;min-height:50vh"><div class="wrap"><h1>Song not found</h1>' +
+        '<p class="lede">That song isn\'t in the store. Browse the full list instead.</p><p><a class="btn btn-brass" href="learn.html">See all songs</a></p></div></section>';
+    };
+    if (!songId) notFound();
+    else fetch("/api/midi/songs?id=" + encodeURIComponent(songId))
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (s) {
+        document.title = s.title + " by " + s.artist + " | Play It Yourself | Reece Music";
+        var yt = safeYt(s.youtubeId);
+        var video = yt
+          ? '<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/' + yt + '?rel=0" title="' + escapeHtml(s.title) + ' tutorial" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>'
+          : '<div class="empty"><div class="vinyl-mini" aria-hidden="true"></div><div><h3>Tutorial video coming soon</h3><p>It comes with the chorus and full-song MIDI files once it\'s ready.</p></div></div>';
+        songRoot.innerHTML =
+          '<section class="page-hero"><div class="wrap">' +
+            '<a class="text-link" href="learn.html">All songs</a>' +
+            '<h1 style="margin-top:24px">' + escapeHtml(s.title) + "</h1>" +
+            '<p class="lede">' + escapeHtml(s.artist) + ". " + escapeHtml(s.description) + "</p>" +
+          "</div></section>" +
+          '<section class="section"><div class="wrap song-layout">' +
+            '<div class="song-video">' + video + "</div>" +
+            '<div><ul class="tiers">' +
+              '<li><div><strong>' + escapeHtml(s.tiers.free.label) + '</strong><span class="muted">A short excerpt to try</span></div><span class="tier-price">Free</span>' +
+                '<a class="btn btn-ghost" href="/api/midi/download?free=' + encodeURIComponent(s.id) + '">Download preview</a></li>' +
+              '<li><div><strong>' + escapeHtml(s.tiers.chorus.label) + '</strong><span class="muted">The chorus, with tutorial</span></div><span class="tier-price">' + money(s.tiers.chorus.price) + "</span>" +
+                '<button class="btn btn-ghost" type="button" data-tier="chorus">Buy chorus</button></li>' +
+              '<li class="is-featured"><div><strong>' + escapeHtml(s.tiers.full.label) + '</strong><span class="muted">The whole song, with tutorial</span></div><span class="tier-price">' + money(s.tiers.full.price) + "</span>" +
+                '<button class="btn btn-brass" type="button" data-tier="full">Buy full song</button></li>' +
+            "</ul>" +
+            '<p class="form-status form-note" role="status" aria-live="polite"></p>' +
+            '<p class="form-note">After payment you get an instant download link, valid for 24 hours. Digital downloads can\'t be refunded once downloaded.</p>' +
+          "</div></div></section>";
+        var statusEl = songRoot.querySelector(".form-status");
+        songRoot.querySelectorAll("button[data-tier]").forEach(function (btn) {
+          btn.addEventListener("click", function () { startCheckout(s.id, btn.getAttribute("data-tier"), btn, statusEl); });
+        });
+      })
+      .catch(notFound);
+  }
+
+  var purchaseRoot = document.querySelector("[data-purchase-page]");
+  if (purchaseRoot) {
+    var sid = new URLSearchParams(location.search).get("session_id");
+    var fail = function (msg) {
+      purchaseRoot.innerHTML = "<h1>We couldn't confirm your download</h1>" +
+        '<p class="lede">' + escapeHtml(msg) + "</p>" +
+        '<div class="btn-row" style="margin-top:28px"><a class="btn btn-brass" href="mailto:' + email + '?subject=' + encodeURIComponent("MIDI download") + '">Email Reece</a>' +
+        '<a class="btn btn-ghost" href="learn.html">Back to the songs</a></div>';
+    };
+    if (!sid) fail("This page needs a payment reference. If you've paid, email info@reecemusic.com with your receipt.");
+    else fetch("/api/midi/verify?session_id=" + encodeURIComponent(sid))
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) {
+        if (!x.ok) return fail((x.d && x.d.error) || "Something went wrong.");
+        var d = x.d, yt = safeYt(d.youtubeId);
+        purchaseRoot.innerHTML = "<h1>Thank you</h1>" +
+          '<p class="lede">Your ' + escapeHtml(d.tier) + " for " + escapeHtml(d.title) + " is ready.</p>" +
+          '<div class="btn-row" style="margin-top:28px"><a class="btn btn-brass" href="' + escapeHtml(d.downloadUrl) + '">Download MIDI</a>' +
+          (yt ? '<a class="btn btn-ghost" href="https://www.youtube.com/watch?v=' + yt + '" target="_blank" rel="noopener">Watch the tutorial</a>' : "") + "</div>" +
+          '<p class="form-note" style="margin-top:20px">Bookmark this page if you want to download the file again later.</p>' +
+          '<p style="margin-top:28px"><a class="text-link" href="learn.html">Browse more songs</a></p>';
+      })
+      .catch(function () { fail("Check your connection and refresh this page. Your payment is safe."); });
+  }
+
+  /* ---------- discourage saving artwork (the watermark is baked into the files) ---------- */
+  document.addEventListener("contextmenu", function (e) {
+    if (e.target.closest && e.target.closest(".art-frame, .lightbox")) e.preventDefault();
+  });
+  document.addEventListener("dragstart", function (e) {
+    if (e.target.closest && e.target.closest(".art-frame, .lightbox")) e.preventDefault();
+  });
+
+  /* ---------- digital art viewer ---------- */
   var box = document.getElementById("art-viewer");
   if (box && typeof box.showModal === "function") {
     var bImg = box.querySelector("img");
     var bTitle = box.querySelector("h3");
     var bPrice = box.querySelector("[data-price]");
     var bBuy = box.querySelector("[data-buy]");
-    var artType = box.getAttribute("data-art-type") || "painting";
+    var artType = box.getAttribute("data-art-type") || "digital artwork";
     document.querySelectorAll("[data-art]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var t = btn.getAttribute("data-title");
@@ -150,7 +243,7 @@
         bImg.alt = t + ", " + artType + " by Reece Music";
         bTitle.textContent = t;
         bPrice.textContent = btn.getAttribute("data-price");
-        bBuy.href = buyLink(t, btn.getAttribute("data-price"), artType);
+        bBuy.href = buyLink(t, btn.getAttribute("data-price"));
         box.showModal();
       });
     });
@@ -161,11 +254,9 @@
     a.href = buyLink(a.getAttribute("data-buy-title"), a.getAttribute("data-buy-price"));
   });
 
-  function buyLink(title, price, artType) {
-    var isDigital = artType === "digital artwork";
-    var details = isDigital ? "Name:\nEmail:" : "Name:\nCity / delivery address:";
-    return "mailto:" + email + "?subject=" + encodeURIComponent((isDigital ? "Digital artwork: " : "Painting: ") + title) +
-      "&body=" + encodeURIComponent("Hi Reece,\n\nI'd like to buy \"" + title + "\" (" + price + ").\n\n" + details + "\n\nThanks!");
+  function buyLink(title, price) {
+    return "mailto:" + email + "?subject=" + encodeURIComponent("Digital artwork: " + title) +
+      "&body=" + encodeURIComponent("Hi Reece,\n\nI'd like to buy \"" + title + "\" (" + price + ").\n\nName:\nEmail:\n\nThanks!");
   }
 
   /* ---------- forms: contact.php when available, otherwise a pre-filled email ---------- */
