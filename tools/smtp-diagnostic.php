@@ -1,7 +1,5 @@
 <?php
-require __DIR__ . '/config.php';
-
-$config = require __DIR__ . '/config.php';
+$config = require __DIR__ . '/../config.php';
 $smtp = $config['smtp'] ?? [];
 
 $host = (string) ($smtp['host'] ?? '');

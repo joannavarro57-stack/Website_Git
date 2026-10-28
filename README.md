@@ -4,12 +4,14 @@ Simple static site for editing in VS Code and uploading to cPanel (`public_html`
 
 ## Files
 
-- `index.html` — homepage
-- `about.html`
-- `services.html`
-- `contact.html`
-- `css/style.css`
-- `js/main.js`
+- Keep the public HTML pages, `contact.php`, `robots.txt`, and `sitemap.xml` in the repository root. The cPanel deployment expects these paths.
+- `css/` — stylesheets
+- `js/` — site scripts
+- `images/` — site imagery and video, grouped into subfolders by content
+- `database/` — database schema
+- `tools/` — local email preview and SMTP diagnostic helpers; these are not deployed
+- `.github/` — GitHub Actions deployment workflow
+- `.vscode/` — workspace editor settings
 
 Put images in an `images` folder and link them like:
 
@@ -23,7 +25,7 @@ In VS Code, install the Live Server extension, then right-click `index.html` →
 
 ## Upload to Tasjeel
 
-Upload the contents of this folder into `public_html`. Keep `index.html` in the root of `public_html`, not inside another folder.
+Upload the public-site files (`index.html`, the other public HTML/PHP pages, `css/`, `js/`, `images/`, `favicon.png`, `robots.txt`, and `sitemap.xml`) into `public_html`. Keep `index.html` directly in `public_html`, not inside another folder. Do not upload `tools/` or `database/`; those are for local development and setup.
 
 ## Mailing list database
 
