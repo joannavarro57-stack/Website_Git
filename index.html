@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reece Williams | Pianist &amp; Live Music in Abu Dhabi</title>
-  <meta name="description" content="Book pianist Reece Williams for live events in Abu Dhabi. Explore ambient piano, ukulele, electronica, recordings and original artwork.">
+  <title>Reece Williams | Pianist, Music &amp; Art in Abu Dhabi</title>
+  <meta name="description" content="Discover Abu Dhabi pianist Reece Williams: ambient piano, ukulele, electronica, live events, recordings and original artwork. Enquire about performances and collaborations.">
   <link rel="canonical" href="https://reecemusic.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Reece Music">
-  <meta property="og:title" content="Reece Williams | Pianist &amp; Live Music in Abu Dhabi">
-  <meta property="og:description" content="Book pianist Reece Williams for live events in Abu Dhabi. Explore ambient piano, ukulele, electronica, recordings and original artwork.">
+  <meta property="og:title" content="Reece Williams | Pianist, Music &amp; Art in Abu Dhabi">
+  <meta property="og:description" content="Discover Abu Dhabi pianist Reece Williams: ambient piano, ukulele, electronica, live events, recordings and original artwork. Enquire about performances and collaborations.">
   <meta property="og:url" content="https://reecemusic.com/">
   <meta property="og:image" content="https://reecemusic.com/images/reece.jpg">
   <meta property="og:image:alt" content="Pianist Reece Williams performing at a grand piano">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/png" href="images/reece-favicon.png">
-  <link rel="stylesheet" href="css/style.css?v=20261028-3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=single-page-6">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -65,25 +68,26 @@
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="site-header">
     <div class="wrap header-inner">
+      <a class="logo" href="#home" aria-label="Reece Music home"><img src="images/reece-logo.jpg" alt="" width="320" height="320">Reece Music</a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Toggle navigation">
         <span></span>
         <span></span>
         <span></span>
       </button>
       <nav id="site-nav" class="nav" aria-label="Main">
-        <a href="index.html" class="is-active">Home</a>
-        <a href="recordings.html">Projects</a>
-        <a href="events.html">Live Events</a>
-        <a href="services.html">Services</a>
-        <a href="artwork.html">Artwork</a>
-        <a href="about.html">About Me</a>
-        <a href="contact.html">Contact Me</a>
+        <a href="#home" class="is-active">Home</a>
+        <a href="#projects">Projects</a>
+        <a href="#events">Live Events</a>
+        <a href="#services">Services</a>
+        <a href="#artwork">Artwork</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
       </nav>
     </div>
   </header>
 
   <main id="main-content">
-    <section class="hero hero-photo">
+    <section class="hero hero-photo" id="home">
       <video class="hero-background-video" autoplay muted loop playsinline preload="metadata" poster="images/reece.jpg" aria-hidden="true">
         <source src="images/here-piano.mp4" type="video/mp4">
       </video>
@@ -94,46 +98,292 @@
         <div class="hero-copy">
           <h1><img src="images/reece-logo.jpg" alt="" width="320" height="320"><span class="hero-name"><span>Reece</span><span>Music</span></span></h1>
           <p class="lede">Abu Dhabi pianist and multi-instrumentalist Reece Williams performs ambient piano, medleys, ukulele, and electronica for events, recordings, and creative collaborations.</p>
-          <p class="hero-note"><span>Demo album</span><span>coming soon...</span></p>
           <div class="hero-actions">
-            <a class="btn btn-ghost" href="recordings.html">Listen</a>
-            <a class="btn btn-primary" href="events.html">Upcoming dates</a>
-            <a class="btn btn-ghost" href="contact.html">Enquire</a>
+            <a class="btn btn-ghost" href="#projects">Listen</a>
+            <a class="btn btn-primary" href="#events">Upcoming dates</a>
+            <a class="btn btn-ghost" href="#contact">Enquire</a>
           </div>
         </div>
-        <div class="mailing-list-block">
-          <p class="mailing-list-label">Sign up to our mailing list</p>
-          <form class="mailing-list-form" id="mailing-list-form" action="contact.php" method="POST" aria-describedby="mailing-list-status">
-            <input type="hidden" name="mailing-list" value="yes">
-            <input type="hidden" name="source" value="homepage">
-            <label class="sr-only" for="mailing-list-email">Email address</label>
-            <input id="mailing-list-email" type="email" name="email" placeholder="Email address" autocomplete="email" required>
-            <button class="button" type="submit">Submit</button>
-            <p class="form-status" id="mailing-list-status" role="status" aria-live="polite"></p>
-          </form>
-        </div>
-        <div class="hero-video-stack">
-          <div class="hero-video">
-            <iframe src="https://www.youtube.com/embed/PUKPWZ648mM" title="Reece Williams electronica project" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-          </div>
-          <div class="hero-video">
-            <iframe src="https://www.youtube.com/embed/cFH72YkSxqc" title="Reece Williams piano video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-          </div>
+        <aside class="hero-side-column" aria-label="Listen and stay in touch">
           <div class="hero-spotify">
-            <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/artist/3hjMpg8KlYuYGQAbB1alcu?utm_source=generator&si=01d022d3e23145d5" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reece Williams on Spotify"></iframe>
+            <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/artist/3hjMpg8KlYuYGQAbB1alcu?utm_source=generator&si=01d022d3e23145d5&theme=0" width="100%" height="352" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Reece Williams on Spotify"></iframe>
+          </div>
+          <div class="mailing-list-block">
+            <form class="mailing-list-form" id="mailing-list-form" action="contact.php" method="POST" aria-describedby="mailing-list-status">
+              <input type="hidden" name="mailing-list" value="yes">
+              <input type="hidden" name="source" value="homepage">
+              <p class="mailing-list-label">Sign up to our mailing list</p>
+              <label class="sr-only" for="mailing-list-email">Email address</label>
+              <input id="mailing-list-email" type="email" name="email" placeholder="Email address" autocomplete="email" required>
+              <button class="button" type="submit">Submit</button>
+              <p class="form-status" id="mailing-list-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+          <div class="hero-contact-details">
+            <p><a href="mailto:info@reecemusic.com">info@reecemusic.com</a></p>
+            <p><a href="tel:+971585464882">+971 58 546 4882</a><span>Abu Dhabi, UAE</span></p>
+          </div>
+        </aside>
+        <div class="hero-video-row" aria-label="Reece Williams videos">
+          <div class="hero-video">
+            <iframe src="https://www.youtube.com/embed/PUKPWZ648mM" title="Reece Williams electronica project" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          </div>
+          <div class="hero-video">
+            <iframe src="https://www.youtube.com/embed/cFH72YkSxqc" title="Reece Williams piano video" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          </div>
+          <div class="hero-video">
+            <iframe src="https://www.youtube.com/embed/bRUzXkX8eEs" title="Reece Piano performance" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          </div>
+          <div class="hero-video">
+            <iframe src="https://www.youtube.com/embed/dDXQ_UBIzpI?list=RDdDXQ_UBIzpI" title="Reece Ukulele performance" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
           </div>
         </div>
       </div>
     </section>
 
+    <section class="section one-page-section" id="projects" aria-labelledby="projects-title">
+      <div class="wrap">
+        <p class="kicker">Listen &amp; watch</p>
+        <h2 class="section-title" id="projects-title">Music projects</h2>
+        <p class="lead">Explore piano, ukulele and electronica performances by Abu Dhabi-based musician Reece Williams.</p>
+        <div class="project-layout">
+          <aside class="project-sidebar">
+            <nav aria-label="Project sections">
+              <button class="project-jump is-active" type="button" data-target="project-piano">Reece Piano</button>
+              <button class="project-jump" type="button" data-target="project-ukulele">Reece Ukulele</button>
+              <button class="project-jump" type="button" data-target="project-electronica">Reece Electronica</button>
+            </nav>
+          </aside>
+          <div class="project-list">
+            <article id="project-piano" class="project-item is-open">
+              <button class="project-toggle" type="button" aria-expanded="true">
+                <span>Reece Piano</span>
+              </button>
+              <div class="project-content">
+                <div class="video-container">
+                  <iframe src="https://www.youtube.com/embed/bRUzXkX8eEs" title="Reece Piano project video" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <p>Ambient piano work with expressive melodic playing and intimate arrangements.</p>
+              </div>
+            </article>
+            <article id="project-ukulele" class="project-item">
+              <button class="project-toggle" type="button" aria-expanded="false">
+                <span>Reece Ukulele</span>
+              </button>
+              <div class="project-content">
+                <div class="video-container">
+                  <iframe src="https://www.youtube.com/embed/dDXQ_UBIzpI?list=RDdDXQ_UBIzpI" title="Reece Ukulele project video" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <p>Warm, rhythmic ukulele-led arrangements with a relaxed, spacious feel.</p>
+              </div>
+            </article>
+            <article id="project-electronica" class="project-item">
+              <button class="project-toggle" type="button" aria-expanded="false">
+                <span>Reece Electronica</span>
+              </button>
+              <div class="project-content">
+                <div class="video-container">
+                  <iframe src="https://www.youtube.com/embed/PUKPWZ648mM" title="Reece Electronica project video" frameborder="0" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <p>Electronic textures and pulse-driven soundscapes shaped for modern listening.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section one-page-section" id="events" aria-labelledby="events-title">
+      <div class="wrap">
+        <p class="kicker">On stage</p>
+        <h2 class="section-title" id="events-title">Live events</h2>
+        <p class="lead">Upcoming performances and live piano events in Abu Dhabi.</p>
+        <div class="tickettailor-embed">
+          <div class="tt-widget">
+            <div class="tt-widget-fallback">
+              <p><a href="https://www.tickettailor.com/all-tickets/reecemusic/?ref=website_widget&amp;show_search_filter=true&amp;show_date_filter=true&amp;show_sort=true" target="_blank" rel="noopener noreferrer">Click here to buy tickets</a><br><small><a href="https://www.tickettailor.com?rf=wdg_337841" class="tt-widget-powered" target="_blank" rel="noopener noreferrer">Sell tickets online with Ticket Tailor</a></small></p>
+            </div>
+            <script src="https://cdn.tickettailor.com/js/widgets/min/widget.js" data-url="https://www.tickettailor.com/all-tickets/reecemusic/?ref=website_widget&amp;show_search_filter=true&amp;show_date_filter=true&amp;show_sort=true" data-type="inline" data-inline-minimal="true" data-inline-show-logo="false" data-inline-bg-fill="true" data-inline-inherit-ref-from-url-param="" data-inline-ref="website_widget"></script>
+          </div>
+        </div>
+        <h3>Past events</h3>
+        <div class="past-events">
+          <article class="event">
+            <p class="meta">August 2nd 2025</p>
+            <h4>Sail Tower Debut Gig</h4>
+          </article>
+          <article class="event">
+            <p class="meta">August 16th 2025</p>
+            <h4>Sail Tower Second Gig</h4>
+          </article>
+        </div>
+        <p class="notice">Want a date that is not listed? <a href="#contact">Send the brief</a> with city, piano type if you know it, and whether the event is public.</p>
+      </div>
+    </section>
+
+    <section class="section one-page-section" id="services" aria-labelledby="services-title">
+      <div class="wrap">
+        <p class="kicker">Work together</p>
+        <h2 class="section-title" id="services-title">Music services</h2>
+        <p class="lead">Abu Dhabi pianist Reece Williams offers live piano for events, recording and studio services, and creative musical collaborations.</p>
+        <div class="grid-3 service-grid">
+          <article class="card">
+            <h3>Live Performances</h3>
+            <p>Solo piano, intimate sets, and performances designed for events, venues, and private occasions.</p>
+          </article>
+          <article class="card">
+            <h3>Recording and Studio Services</h3>
+            <p>Professional studio work, session piano, and tailored recordings for projects and releases.</p>
+          </article>
+          <article class="card">
+            <h3>Collaboration</h3>
+            <p>Creative partnerships for recordings, performances, and musical projects with a shared artistic vision.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section one-page-section" id="artwork" aria-labelledby="artwork-title">
+      <div class="wrap">
+        <p class="kicker">Visual work</p>
+        <h2 class="section-title" id="artwork-title">Original artwork</h2>
+        <p class="lead">A curated collection of original artworks by Reece Williams. Each piece is unique and available for purchase.</p>
+        <div class="grid-4">
+          <article class="artwork-item" data-title="Abstract" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-01.jpg" alt="Abstract artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Abstract</h3><p class="price">$10</p></div>
+          </article>
+          <article class="artwork-item" data-title="Cosmic Performance" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-02.jpg" alt="Cosmic Performance artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Cosmic Performance</h3><p class="price">$10</p></div>
+          </article>
+          <article class="artwork-item" data-title="Desert Sonata" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-03.jpg" alt="Desert Sonata artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Desert Sonata</h3><p class="price">$10</p></div>
+          </article>
+          <article class="artwork-item" data-title="Joyful Keys" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-04.jpg" alt="Joyful Keys artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Joyful Keys</h3><p class="price">$10</p></div>
+          </article>
+          <article class="artwork-item" data-title="Beach Harmony" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-05.jpg" alt="Beach Harmony artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Beach Harmony</h3><p class="price">$10</p></div>
+          </article>
+          <article class="artwork-item" data-title="Universe's Echo" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-06.jpg" alt="Universe's Echo artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Universe's Echo</h3><p class="price">$10</p></div>
+          </article>
+          <article class="artwork-item" data-title="Celestial Notes" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-07.jpg" alt="Celestial Notes artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Celestial Notes</h3><p class="price">$10</p></div>
+          </article>
+          <article class="artwork-item" data-title="Digital Rhythm" data-price="$10">
+            <figure class="artwork-figure">
+              <img src="images/art/artwork-08.jpg" alt="Digital Rhythm artwork by Reece Williams" width="1024" height="1024" loading="lazy" decoding="async">
+            </figure>
+            <div class="artwork-info"><h3>Digital Rhythm</h3><p class="price">$10</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section about-intro-section one-page-section" id="about" aria-labelledby="about-title">
+      <div class="wrap">
+        <p class="kicker">The artist</p>
+        <div class="about-layout">
+          <div class="about-image about-hero-image">
+            <img src="images/about/about-01.jpg" alt="Reece Williams portrait" width="1280" height="1920" loading="lazy" decoding="async">
+          </div>
+          <div class="about-content">
+            <h2 id="about-title">About Reece Williams</h2>
+            <p>Established 1991 in an English seaside town, I've been fortunate enough to travel some of the world pursuing an enjoyment for engineering whilst managing to haul a piano with me.</p>
+            <p>I began learning the keyboard, and then piano. Having always had a curiosity for stringed instruments I thought I'd try to keep it simple and started with the ukulele, eventually falling in love with that instrument too.</p>
+            <p>Now based in Abu Dhabi, United Arab Emirates, I am preparing new recordings and creative projects.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section about-photo-section one-page-section">
+      <div class="wrap">
+        <div class="about-image about-full-image">
+          <img src="images/about/about-03.jpg" alt="Reece Williams beside a piano" width="1920" height="1440" loading="lazy" decoding="async">
+        </div>
+      </div>
+    </section>
+
+    <section class="section one-page-section contact-section" id="contact" aria-labelledby="contact-title">
+      <div class="wrap">
+        <p class="kicker">Get in touch</p>
+        <h2 class="section-title" id="contact-title">Let’s make something meaningful.</h2>
+        <div class="contact-layout">
+          <video class="hero-background-video contact-background-video" autoplay muted loop playsinline preload="none" poster="images/reece.jpg" aria-hidden="true">
+            <source src="images/here-piano.mp4" type="video/mp4">
+          </video>
+          <video class="hero-background-video hero-reverse-video contact-background-video" muted playsinline preload="none" aria-hidden="true">
+            <source src="images/here-piano-reverse.mp4" type="video/mp4">
+          </video>
+          <div class="contact-details">
+            <p><strong>Email:</strong> <a href="mailto:info@reecemusic.com">info@reecemusic.com</a></p>
+            <p><strong>Phone:</strong> <a href="tel:+971585464882">+971 58 546 4882</a></p>
+            <p><strong>Location:</strong> Abu Dhabi, United Arab Emirates</p>
+          </div>
+          <form class="contact-form" id="contact-form" action="contact.php" method="POST" aria-describedby="contact-status">
+            <label class="sr-only" aria-hidden="true">
+              Website
+              <input type="text" name="website" tabindex="-1" autocomplete="off">
+            </label>
+            <label>Name<input type="text" name="name" autocomplete="name" required></label>
+            <label>Email<input type="email" name="email" autocomplete="email" required></label>
+            <label>Message<textarea name="message" rows="6" required></textarea></label>
+            <label class="contact-check">
+              <input type="checkbox" name="human" value="yes" required>
+              <span>I confirm I am not a robot.</span>
+            </label>
+            <button class="button" type="submit">Send message</button>
+            <p class="form-status" id="contact-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <div class="lightbox" id="art-lightbox" aria-hidden="true">
+    <div class="lightbox-backdrop" data-close="true"></div>
+    <div class="lightbox-panel" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+      <button class="lightbox-close" type="button" aria-label="Close artwork view">×</button>
+      <div class="lightbox-image-wrap">
+        <img id="lightbox-image" src="" alt="Expanded artwork view" width="1024" height="1024">
+        <span class="lightbox-watermark" aria-hidden="true">Reece Music ©</span>
+      </div>
+      <div class="lightbox-meta">
+        <h2 id="lightbox-title">Artwork</h2>
+        <p id="lightbox-price">$10</p>
+        <button class="lightbox-back" type="button">Back to artwork</button>
+      </div>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="wrap footer-inner">
-      <p>&copy; <span id="year"></span> Reece Williams</p>
+      <p>&copy; <span id="year"></span> Reece Williams. All rights reserved.</p>
       <p><a href="mailto:info@reecemusic.com">info@reecemusic.com</a></p>
     </div>
   </footer>
-  <script src="js/main.js?v=20261028-3"></script>
+  <script src="js/main.js?v=single-page-1"></script>
 </body>
 </html>

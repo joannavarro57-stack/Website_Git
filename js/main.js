@@ -64,6 +64,29 @@ menuButtons.forEach(function (button) {
   });
 });
 
+const sectionNavigation = document.querySelectorAll('.home .nav a[href^="#"]');
+const navigableSections = Array.from(sectionNavigation)
+  .map(function (link) {
+    return document.querySelector(link.getAttribute('href'));
+  })
+  .filter(Boolean);
+
+if ('IntersectionObserver' in window && sectionNavigation.length && navigableSections.length) {
+  const sectionObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+
+      sectionNavigation.forEach(function (link) {
+        link.classList.toggle('is-active', link.hash === '#' + entry.target.id);
+      });
+    });
+  }, { rootMargin: '-25% 0px -65% 0px' });
+
+  navigableSections.forEach(function (section) {
+    sectionObserver.observe(section);
+  });
+}
+
 const lightbox = document.getElementById('art-lightbox');
 
 if (lightbox) {
