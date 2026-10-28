@@ -1,0 +1,9 @@
+{
+  "name": "reecemusic",
+  "private": true,
+  "description": "reecemusic.com — static site with Vercel functions for the contact form and mailing list",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}

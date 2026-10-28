@@ -2,6 +2,6 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/reecemus/public_html/
-    - /bin/cp -f index.html about.html artwork.html events.html recordings.html services.html contact.html 404.html contact.php favicon.png robots.txt sitemap.xml $DEPLOYPATH
+    - /bin/cp -f index.html sight-and-sound.html gigs.html shop.html about.html artwork.html events.html recordings.html services.html contact.html 404.html contact.php favicon.png robots.txt sitemap.xml $DEPLOYPATH
     - if [ -f config.php ]; then /bin/cp -f config.php $DEPLOYPATH; fi
     - /bin/cp -rf css js images $DEPLOYPATH

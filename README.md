@@ -1,3 +1,24 @@
+## Hosting on Vercel (current)
+
+The site is static HTML served by Vercel. The contact form and mailing list run as Vercel functions in `api/`:
+
+- `api/contact.js` emails enquiries to info@reecemusic.com through the info@ mailbox.
+- `api/subscribe.js` saves signups to Supabase (`reece_subscribers`, see `database/supabase-reece.sql`) and sends a welcome email.
+
+Set these in Vercel → Project → Settings → Environment Variables, then redeploy:
+
+| Name | Value |
+| --- | --- |
+| `SMTP_PASS` | Password of the info@reecemusic.com mailbox |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → service_role / secret key |
+| `SMTP_HOST` | Optional, default `mail.reecemusic.com` |
+| `SMTP_PORT` | Optional, default `465` |
+| `SMTP_USER` | Optional, default `info@reecemusic.com` |
+
+Until those are set, the forms open a pre-filled email to info@reecemusic.com instead, so nothing is lost.
+
+Hero playlist and performance films are set in `js/config.js`.
+
 # Website starter
 
 Simple static site for editing in VS Code and uploading to cPanel (`public_html`).
