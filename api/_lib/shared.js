@@ -56,7 +56,7 @@ function escapeHtml(s) {
 function emailShell(innerHtml) {
   return `<!doctype html><html><body style="margin:0;background:#0B1630;font-family:Arial,Helvetica,sans-serif;color:#ECE8DF;">
 <div style="max-width:560px;margin:0 auto;padding:36px 20px;">
-  <div style="padding:0 0 18px;border-bottom:1px solid #C9A86A;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#ECE8DF;">Reece <em style="color:#C9A86A;">Williams</em></div>
+  <div style="padding:0 0 18px;border-bottom:1px solid #C9A86A;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#ECE8DF;">Reece <em style="color:#C9A86A;">Music</em></div>
   <div style="padding:28px 0;font-size:16px;line-height:1.6;color:#ECE8DF;">${innerHtml}</div>
   <p style="margin:0;padding-top:18px;border-top:1px solid #1D3A6B;font-size:13px;color:#97A9C9;">Reece Music · Abu Dhabi · <a href="https://reecemusic.com" style="color:#C9A86A;">reecemusic.com</a></p>
 </div></body></html>`;

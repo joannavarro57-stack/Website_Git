@@ -54,7 +54,7 @@
       if (!m || host.querySelector("iframe")) return;
       var f = document.createElement("iframe");
       f.src = "https://open.spotify.com/embed/" + m[1] + "/" + m[2] + "?utm_source=generator&theme=0";
-      f.height = "152"; f.loading = "lazy"; f.title = "Reece Williams on Spotify";
+      f.height = "152"; f.loading = "lazy"; f.title = "Reece Music on Spotify";
       f.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
       host.innerHTML = ""; host.appendChild(f);
     };
@@ -120,7 +120,7 @@
       btn.addEventListener("click", function () {
         var t = btn.getAttribute("data-title");
         bImg.src = btn.getAttribute("data-art");
-        bImg.alt = t + ", painting by Reece Williams";
+        bImg.alt = t + ", painting by Reece Music";
         bTitle.textContent = t;
         bPrice.textContent = btn.getAttribute("data-price");
         bBuy.href = buyLink(t, btn.getAttribute("data-price"));
