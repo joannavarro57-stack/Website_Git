@@ -1,0 +1,59 @@
+name: Deploy website to cPanel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy production website
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Deploy files over SSH
+        env:
+          CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
+          CPANEL_PORT: ${{ secrets.CPANEL_PORT }}
+          CPANEL_USER: ${{ secrets.CPANEL_USER }}
+          CPANEL_SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          CPANEL_KNOWN_HOSTS: ${{ secrets.CPANEL_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for name in CPANEL_HOST CPANEL_PORT CPANEL_USER CPANEL_SSH_KEY CPANEL_KNOWN_HOSTS; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Configure the $name repository secret before deploying."
+              exit 1
+            fi
+          done
+
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$CPANEL_SSH_KEY" > "$HOME/.ssh/cpanel_deploy"
+          printf '%s\n' "$CPANEL_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/cpanel_deploy" "$HOME/.ssh/known_hosts"
+
+          git archive --format=tar HEAD \
+            index.html about.html artwork.html events.html recordings.html \
+            services.html contact.html 404.html contact.php favicon.png \
+            robots.txt sitemap.xml css js images \
+            | gzip \
+            | ssh \
+                -i "$HOME/.ssh/cpanel_deploy" \
+                -p "$CPANEL_PORT" \
+                -o BatchMode=yes \
+                -o StrictHostKeyChecking=yes \
+                "$CPANEL_USER@$CPANEL_HOST" \
+                'mkdir -p /home/reecemus/public_html && tar -xzf - -C /home/reecemus/public_html'
