@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/reece.css?v=2026-10-dark-blue">
+  <link rel="stylesheet" href="css/reece.css?v=2026-10-hero-video">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -83,8 +83,17 @@
 
   <main id="main">
     <section class="hero">
+      <div class="hero-media" data-pingpong aria-hidden="true">
+        <video data-forward autoplay muted playsinline preload="metadata" poster="images/reece.jpg">
+          <source src="images/here-piano.mp4" type="video/mp4">
+        </video>
+        <video data-reverse muted playsinline preload="metadata">
+          <source src="images/here-piano-reverse.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="hero-scrim" aria-hidden="true"></div>
       <div class="wrap">
-        <div>
+        <div class="hero-copy">
           <p class="kicker">Pianist in Abu Dhabi</p>
           <h1>Reece <em>Williams</em></h1>
           <p class="lede">Ambient piano, ukulele and electronica for quiet rooms, late evenings and the people gathered in them.</p>
@@ -95,14 +104,6 @@
         </div>
 
         <div class="stage">
-          <div class="portrait" data-pingpong>
-            <video data-forward autoplay muted playsinline preload="metadata" poster="images/reece.jpg" aria-hidden="true">
-              <source src="images/here-piano.mp4" type="video/mp4">
-            </video>
-            <video data-reverse muted playsinline preload="metadata" aria-hidden="true">
-              <source src="images/here-piano-reverse.mp4" type="video/mp4">
-            </video>
-          </div>
           <aside class="sleeve" aria-label="Listen on Spotify">
             <div class="sleeve-top">
               <p class="sleeve-title">On rotation<small>Reece Williams on Spotify</small></p>
