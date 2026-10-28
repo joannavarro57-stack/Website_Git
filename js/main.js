@@ -2,6 +2,29 @@ document.querySelectorAll("#year").forEach(function (el) {
   el.textContent = new Date().getFullYear();
 });
 
+const revealElements = document.querySelectorAll(
+  'main > section, main > .section, .card, .artwork-item, .event, .project-item'
+);
+const revealObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver(function (entries, observer) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: 0.12 })
+  : null;
+
+revealElements.forEach(function (element) {
+  element.classList.add('reveal');
+  if (revealObserver) {
+    revealObserver.observe(element);
+  } else {
+    element.classList.add('is-visible');
+  }
+});
+
 const menuButtons = document.querySelectorAll('.menu-toggle');
 
 menuButtons.forEach(function (button) {
@@ -298,6 +321,10 @@ if (contactForm) {
 
       if (submitButton) {
         submitButton.textContent = 'Sent';
+        window.setTimeout(function () {
+          submitButton.disabled = false;
+          submitButton.textContent = originalLabel;
+        }, 2200);
       }
 
       if (statusMessage) {
