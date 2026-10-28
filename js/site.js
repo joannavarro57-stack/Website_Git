@@ -109,6 +109,32 @@
     }
   }
 
+  /* ---------- MIDI songs (Gigs page) ---------- */
+  var midiGrid = document.getElementById("midi-songs");
+  if (midiGrid) {
+    var money = function (c) { return c == null ? "" : "$" + (c / 100).toFixed(c % 100 ? 2 : 0); };
+    fetch("/api/midi-songs", { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var songs = (data && data.songs) || [];
+        if (!songs.length) { midiGrid.hidden = true; return; }
+        midiGrid.innerHTML = songs.map(function (s) {
+          var prices = ["Free preview"];
+          if (s.chorus != null) prices.push(money(s.chorus) + " chorus");
+          if (s.full != null) prices.push(money(s.full) + " full song");
+          return '<article class="record">' +
+            '<div class="disc" aria-hidden="true"></div>' +
+            "<h3>" + escapeHtml(s.title) + "</h3>" +
+            '<span class="muted song-artist">' + escapeHtml(s.artist) + "</span>" +
+            "<p>" + escapeHtml(s.description) + "</p>" +
+            '<span class="song-prices">' + escapeHtml(prices.join(", ")) + "</span>" +
+            '<div class="btn-row"><a class="btn btn-brass" href="' + escapeHtml(s.url) + '" target="_blank" rel="noopener">Get the MIDI</a></div>' +
+          "</article>";
+        }).join("");
+      })
+      .catch(function () { midiGrid.hidden = true; });
+  }
+
   /* ---------- painting viewer ---------- */
   var box = document.getElementById("art-viewer");
   if (box && typeof box.showModal === "function") {
