@@ -18,13 +18,24 @@ jobs:
         env:
           TOKEN: ${{ secrets.TARGET_PAT }}
         run: |
+          echo "Token length: ${#TOKEN}"
+          
           if [ -z "$TOKEN" ]; then
-            echo "ERROR: TARGET_PAT secret is empty"
+            echo "ERROR: TARGET_PAT secret is empty!"
             exit 1
           fi
 
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git remote add target https://x-access-token:${TOKEN}@github.com/joannavarro57-stack/reecewebsite_git.git
+          # Remove target remote if it already exists
+          git remote remove target 2>/dev/null || true
+
+          # Add the remote cleanly
+          git remote add target "https://x-access-token:${TOKEN}@github.com/joannavarro57-stack/reecewebsite_git.git"
+
+          echo "Remote added successfully"
+          git remote -v
+
+          echo "Pushing..."
           git push target HEAD:main --force
