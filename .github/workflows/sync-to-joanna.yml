@@ -1,4 +1,4 @@
-name: Sync to joannavarro57-stack/reecewebsite_git
+name: Sync to joannavarro57-stack
 
 on:
   push:
@@ -9,16 +9,22 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source repo
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Push to target repo
+      - name: Push to target
+        env:
+          TOKEN: ${{ secrets.TARGET_PAT }}
         run: |
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: TARGET_PAT secret is empty"
+            exit 1
+          fi
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git remote add target https://x-access-token:${{ secrets.TARGET_PAT }}@github.com/joannavarro57-stack/reecewebsite_git.git
-          
-          git push target main --force
+          git remote add target https://x-access-token:${TOKEN}@github.com/joannavarro57-stack/reecewebsite_git.git
+          git push target HEAD:main --force
