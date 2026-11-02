@@ -1,4 +1,4 @@
-/* Reece Music — midnight lacquer & brass */
+/* Reece Music — midnight lacquer & aqua */
 :root {
   /* Midnight Drone palette */
   --ink: #04050E;          /* midnight: page background */
@@ -6,9 +6,9 @@
   --surface: #0C1035;      /* ink blended with indigo: cards and panels */
   --mist: #CFD8DC;         /* mist: main text, artwork mats, light panels */
   --muted: #969DA2;        /* mist dimmed: secondary text */
-  --accent: #B39DDB;       /* lavender: buttons, links, prices, italics */
-  --accent-deep: #766CB6;  /* lavender toward indigo: rules and offsets */
-  --accent-hover: #C7B6E6;
+  --accent: #76DBE3;       /* aqua: buttons, links, prices, italics */
+  --accent-deep: #3A9FAB;  /* aqua toward indigo: rules and offsets */
+  --accent-hover: #A2E8EE;
   --line: rgba(207, 216, 220, 0.16);
   --display: "Bodoni Moda", "Didot", Georgia, serif;
   --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
@@ -82,7 +82,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .btn-ghost { background: transparent; color: var(--mist); border-color: rgba(207, 216, 220, 0.35); }
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 .btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
-.text-link { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(179, 157, 219,.4); padding-bottom: 2px; }
+.text-link { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(118, 219, 227,.4); padding-bottom: 2px; }
 .text-link:hover { border-bottom-color: var(--accent); }
 
 /* ---------- sections ---------- */
@@ -126,7 +126,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .sleeve {
   position: relative; width: min(420px, 100%); margin-left: auto;
   background: var(--surface);
-  border: 1px solid rgba(179, 157, 219, 0.45);
+  border: 1px solid rgba(118, 219, 227, 0.45);
   padding: 22px 22px 20px;
   box-shadow: 0 30px 60px rgba(2, 2, 8, 0.55);
   z-index: 2;
@@ -150,7 +150,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
     radial-gradient(circle, var(--accent) 0 15%, #05061A 15.5% 17%, transparent 17.5%),
     repeating-radial-gradient(circle, #080A22 0 2px, #141A5C 2.5px 3.5px),
     #080A22;
-  box-shadow: 0 0 0 1px rgba(179, 157, 219,.35), inset 0 0 0 6px #080A22, inset 0 0 0 7px rgba(207, 216, 220,.18), 0 20px 50px rgba(4, 5, 14,.5);
+  box-shadow: 0 0 0 1px rgba(118, 219, 227,.35), inset 0 0 0 6px #080A22, inset 0 0 0 7px rgba(207, 216, 220,.18), 0 20px 50px rgba(4, 5, 14,.5);
   transition: transform 1.2s cubic-bezier(.2,.7,.2,1);
 }
 .vinyl::before { /* sheen */
@@ -222,7 +222,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 /* lightbox */
 .lightbox { border: 0; padding: 0; background: transparent; max-width: min(92vw, 880px); width: 100%; color: var(--mist); }
 .lightbox::backdrop { background: rgba(4, 5, 14, 0.88); }
-.lightbox-inner { background: var(--surface); border: 1px solid rgba(179, 157, 219,.4); padding: clamp(14px, 2.5vw, 28px); }
+.lightbox-inner { background: var(--surface); border: 1px solid rgba(118, 219, 227,.4); padding: clamp(14px, 2.5vw, 28px); }
 .lightbox img { width: 100%; max-height: 70vh; object-fit: contain; background: var(--mist); padding: 10px; }
 .lightbox-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-top: 18px; }
 .lightbox-meta h3 { font-size: 1.6rem; }
@@ -247,7 +247,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .video figcaption strong { font-family: var(--display); font-weight: 400; font-size: 1.3rem; display: block; }
 
 .empty {
-  border: 1px dashed rgba(179, 157, 219,.45); padding: clamp(28px, 5vw, 56px);
+  border: 1px dashed rgba(118, 219, 227,.45); padding: clamp(28px, 5vw, 56px);
   display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center;
 }
 .empty .vinyl-mini { width: 96px; height: 96px; border-radius: 50%;
