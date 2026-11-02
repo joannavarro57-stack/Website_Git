@@ -135,18 +135,14 @@
 
     if (set.length > 1) {
       var nav = document.createElement("div");
-      nav.className = "carousel-nav" + (set.length > 12 ? " has-many" : "");
+      nav.className = "carousel-nav";
       nav.innerHTML = '<button class="carousel-arrow" type="button" data-step="-1" aria-label="Previous video"><span aria-hidden="true">&#8249;</span></button>' +
-        '<div class="carousel-dots">' + set.map(function (v, i) {
-          return '<button type="button" data-go="' + i + '" aria-label="Show video ' + (i + 1) + (v.title ? ": " + escapeHtml(v.title) : "") + '"></button>';
-        }).join("") + "</div>" +
-        '<span class="carousel-count" aria-hidden="true"></span>' +
+        '<span class="carousel-count" aria-live="polite"></span>' +
         '<button class="carousel-arrow" type="button" data-step="1" aria-label="Next video"><span aria-hidden="true">&#8250;</span></button>';
       host.appendChild(nav);
       nav.addEventListener("click", function (e) {
         var b = e.target.closest("button"); if (!b) return;
         if (b.hasAttribute("data-step")) go(active + Number(b.getAttribute("data-step")));
-        else go(Number(b.getAttribute("data-go")));
       });
       host.tabIndex = 0;
       host.addEventListener("keydown", function (e) {
@@ -186,9 +182,6 @@
         card.classList.toggle("is-far", a > 2);
         card.setAttribute("aria-hidden", d === 0 ? "false" : "true");
         card.querySelectorAll("button, iframe").forEach(function (el) { el.tabIndex = d === 0 ? 0 : -1; });
-      });
-      host.querySelectorAll(".carousel-dots button").forEach(function (b, i) {
-        b.setAttribute("aria-current", i === active ? "true" : "false");
       });
       var count = host.querySelector(".carousel-count");
       if (count) count.textContent = (active + 1) + " / " + n;
