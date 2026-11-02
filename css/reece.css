@@ -17,6 +17,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
@@ -229,8 +230,12 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .lightbox-close { position: absolute; top: 10px; right: 10px; background: var(--ink); color: var(--mist); border: 1px solid var(--line); border-radius: 999px; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
 
 /* ---------- videos ---------- */
-.video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 3vw, 36px); }
-@media (max-width: 760px) { .video-grid { grid-template-columns: 1fr; } }
+.video-set + .video-set { margin-top: clamp(40px, 6vw, 72px); }
+.video-set-title { font-size: clamp(1.6rem, 3vw, 2.1rem); padding-bottom: 14px; margin-bottom: 24px; border-bottom: 1px solid var(--accent-deep); }
+.video-set-title em { color: var(--accent); }
+.video-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 32px); }
+@media (max-width: 960px) { .video-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .video-grid { grid-template-columns: 1fr; } }
 .video { margin: 0; }
 .video-frame { position: relative; aspect-ratio: 16/9; background: var(--surface); overflow: hidden; }
 .video-frame img { width: 100%; height: 100%; object-fit: cover; }
@@ -239,12 +244,12 @@ p { margin: 0 0 1em; max-width: 62ch; }
   position: absolute; inset: 0; display: grid; place-items: center; border: 0; cursor: pointer;
   background: linear-gradient(180deg, transparent 40%, rgba(4, 5, 14,.75));
 }
-.video-play span { width: 72px; height: 72px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; transition: transform .2s; }
+.video-play span { width: 60px; height: 60px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; transition: transform .2s; }
 .video-play span::after { content: ""; margin-left: 5px; border-left: 18px solid var(--ink); border-top: 11px solid transparent; border-bottom: 11px solid transparent; }
 .video-play:hover span { transform: scale(1.06); }
 .video figcaption { margin-top: 14px; }
 .video figcaption span { display: block; }
-.video figcaption strong { font-family: var(--display); font-weight: 400; font-size: 1.3rem; display: block; }
+.video figcaption strong { font-family: var(--display); font-weight: 400; font-size: 1.15rem; display: block; }
 
 .empty {
   border: 1px dashed rgba(118, 219, 227,.45); padding: clamp(28px, 5vw, 56px);

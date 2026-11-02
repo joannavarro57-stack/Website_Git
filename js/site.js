@@ -83,30 +83,32 @@
   document.querySelectorAll("[data-spotify-link]").forEach(function (a) { if (cfg.spotify) a.href = cfg.spotify; });
 
   /* ---------- recorded performances ---------- */
-  var videoGrid = document.getElementById("video-grid");
-  if (videoGrid) {
-    var vids = (cfg.videos || []).filter(function (v) { return v && v.youtube; });
-    if (!vids.length) {
-      document.getElementById("video-empty").hidden = false;
-    } else {
-      vids.forEach(function (v) {
+  var galleries = document.querySelectorAll("[data-video-gallery]");
+  if (galleries.length) {
+    var vids = (cfg.videos || []).filter(function (v) { return v && /^[A-Za-z0-9_-]{11}$/.test(v.youtube || ""); });
+    if (!vids.length) document.getElementById("video-empty").hidden = false;
+    galleries.forEach(function (grid) {
+      var set = vids.filter(function (v) { return v.gallery === grid.getAttribute("data-video-gallery"); });
+      grid.closest(".video-set").hidden = !set.length;
+      set.forEach(function (v) {
+        var label = v.title || "Reece Music performance";
         var fig = document.createElement("figure");
         fig.className = "video";
         fig.innerHTML =
           '<div class="video-frame">' +
             '<img src="https://i.ytimg.com/vi/' + v.youtube + '/hqdefault.jpg" alt="" loading="lazy">' +
-            '<button class="video-play" type="button" aria-label="Play ' + escapeHtml(v.title) + '"><span></span></button>' +
+            '<button class="video-play" type="button" aria-label="Play ' + escapeHtml(label) + '"><span></span></button>' +
           "</div>" +
-          "<figcaption><strong>" + escapeHtml(v.title) + "</strong>" +
-          (v.note ? '<span class="muted">' + escapeHtml(v.note) + "</span>" : "") + "</figcaption>";
+          (v.title || v.note ? "<figcaption>" + (v.title ? "<strong>" + escapeHtml(v.title) + "</strong>" : "") +
+            (v.note ? '<span class="muted">' + escapeHtml(v.note) + "</span>" : "") + "</figcaption>" : "");
         fig.querySelector(".video-play").addEventListener("click", function () {
           var frame = fig.querySelector(".video-frame");
           frame.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + v.youtube +
-            '?autoplay=1&rel=0" title="' + escapeHtml(v.title) + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+            '?autoplay=1&rel=0" title="' + escapeHtml(label) + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
         });
-        videoGrid.appendChild(fig);
+        grid.appendChild(fig);
       });
-    }
+    });
   }
 
   /* ---------- Play it yourself: free MIDI, YouTube tutorial, PayPal donation ---------- */

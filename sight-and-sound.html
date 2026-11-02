@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/reece.css?v=2026-11-voice-row">
+  <link rel="stylesheet" href="css/reece.css?v=2026-11-video-gallery">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -56,7 +56,18 @@
           <h2>Recorded Performances</h2>
           <p>Piano, ukulele and electronica, recorded in Abu Dhabi. Press play on any performance. <a class="text-link" href="https://www.youtube.com/channel/UCQuz6uwcdwbwhRcAkK6bZ0Q" target="_blank" rel="noopener">More on YouTube</a></p>
         </div>
-        <div class="video-grid" id="video-grid"></div>
+        <div class="video-set">
+          <h3 class="video-set-title">Reece <em>Piano</em></h3>
+          <div class="video-grid" data-video-gallery="piano"></div>
+        </div>
+        <div class="video-set">
+          <h3 class="video-set-title">Reece <em>Ukulele</em></h3>
+          <div class="video-grid" data-video-gallery="ukulele"></div>
+        </div>
+        <div class="video-set">
+          <h3 class="video-set-title">Reece <em>Electronica</em></h3>
+          <div class="video-grid" data-video-gallery="electronica"></div>
+        </div>
         <div class="empty" id="video-empty" hidden>
           <div class="vinyl-mini" aria-hidden="true"></div>
           <div>
@@ -180,7 +191,7 @@
       </div>
     </div>
   </footer>
-  <script src="js/config.js?v=2026-11-free-midi"></script>
-  <script src="js/site.js?v=2026-11-free-midi"></script>
+  <script src="js/config.js?v=2026-11-video-gallery"></script>
+  <script src="js/site.js?v=2026-11-video-gallery"></script>
 </body>
 </html>

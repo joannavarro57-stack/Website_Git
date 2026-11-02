@@ -13,10 +13,14 @@ window.REECE = {
   // or "https://paypal.me/…". Leave empty to hide every Donate button.
   paypal: "",
 
-  // Recorded performances on the Sight & Sound page (YouTube video IDs).
+  // Recorded performances on the Sight & Sound page, shown in three galleries.
+  // youtube: the 11-character video ID (the part after "youtu.be/" or "v=").
+  // gallery: "piano", "ukulele" or "electronica". title and note are optional.
   videos: [
-    { youtube: "bRUzXkX8eEs", title: "Reece Piano", note: "Ambient piano with expressive, intimate arrangements." },
-    { youtube: "dDXQ_UBIzpI", title: "Reece Ukulele", note: "Warm, rhythmic ukulele with a relaxed, spacious feel." },
-    { youtube: "PUKPWZ648mM", title: "Reece Electronica", note: "Electronic textures and pulse-driven soundscapes." }
+    { gallery: "piano", youtube: "bRUzXkX8eEs", title: "Ambient piano", note: "Expressive, intimate arrangements." },
+    { gallery: "piano", youtube: "vrkOTYjy8oI", title: "Played by ear" },
+    { gallery: "ukulele", youtube: "dDXQ_UBIzpI", title: "Open-air ukulele", note: "Warm, rhythmic and spacious." },
+    { gallery: "electronica", youtube: "PUKPWZ648mM", title: "Pulse and texture", note: "Electronic soundscapes." },
+    { gallery: "electronica", youtube: "zxy67QAVSzk", title: "Layered light" }
   ]
 };
