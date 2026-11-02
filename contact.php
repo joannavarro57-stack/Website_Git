@@ -170,16 +170,16 @@ if ($mailingList) {
         . "Reece Music\n"
         . "info@reecemusic.com\n";
     $welcomeHtml = '<!doctype html>'
-        . '<html><body style="margin:0;background:#f3efe6;color:#1a1612;font-family:Arial,sans-serif;">'
+        . '<html><body style="margin:0;background:#CFD8DC;color:#04050E;font-family:Arial,sans-serif;">'
         . '<div style="max-width:600px;margin:0 auto;padding:36px 20px;">'
-        . '<div style="background:#1a1612;padding:28px 30px;border-bottom:4px solid #b08d57;">'
+        . '<div style="background:#04050E;padding:28px 30px;border-bottom:4px solid #B39DDB;">'
         . '<img src="https://reecemusic.com/images/reece-logo.jpg" alt="Reece Music" width="64" height="64" style="display:inline-block;vertical-align:middle;width:64px;height:64px;border-radius:50%;">'
-        . '<span style="display:inline-block;vertical-align:middle;margin-left:14px;color:#f0d49c;font-size:32px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Reece Music</span>'
+        . '<span style="display:inline-block;vertical-align:middle;margin-left:14px;color:#B39DDB;font-size:32px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Reece Music</span>'
         . '</div>'
-        . '<div style="background:#fbf7f0;padding:36px 30px;">'
+        . '<div style="background:#FFFFFF;padding:36px 30px;">'
         . '<h1 style="margin:0;font-size:26px;line-height:1.25;font-weight:700;">Thank you for signing up to Reece Music mailing list!</h1>'
         . '</div>'
-        . '<p style="margin:18px 0 0;color:#6a6358;font-size:13px;line-height:1.5;text-align:center;">Reece Music · <a href="mailto:info@reecemusic.com" style="color:#8c6a34;">info@reecemusic.com</a></p>'
+        . '<p style="margin:18px 0 0;color:#1A237E;font-size:13px;line-height:1.5;text-align:center;">Reece Music · <a href="mailto:info@reecemusic.com" style="color:#1A237E;">info@reecemusic.com</a></p>'
         . '</div></body></html>';
     $welcomeSent = sendSmtpEmail($smtp, $email, $welcomeSubject, $welcomeText, $welcomeHtml);
     if (!$welcomeSent) {
