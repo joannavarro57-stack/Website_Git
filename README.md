@@ -9,7 +9,7 @@ Pushing to `main` deploys through `.github/workflows/deploy.yml` (SSH upload). I
 `CPANEL_HOST`, `CPANEL_PORT`, `CPANEL_USER`, `CPANEL_SSH_KEY`, `CPANEL_KNOWN_HOSTS`.
 `.cpanel.yml` does the same copy if you deploy from cPanel → Git Version Control instead.
 
-Hero playlist and performance films are set in `js/config.js`.
+Hero playlist and recorded performances are set in `js/config.js`.
 
 ## Mailing list database
 

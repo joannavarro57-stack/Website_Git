@@ -82,7 +82,7 @@
 
   document.querySelectorAll("[data-spotify-link]").forEach(function (a) { if (cfg.spotify) a.href = cfg.spotify; });
 
-  /* ---------- performance films ---------- */
+  /* ---------- recorded performances ---------- */
   var videoGrid = document.getElementById("video-grid");
   if (videoGrid) {
     var vids = (cfg.videos || []).filter(function (v) { return v && v.youtube; });
