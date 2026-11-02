@@ -186,7 +186,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .voice h3 em { color: var(--accent); }
 .voice p { color: var(--muted); margin-bottom: 24px; }
 .voice-film {
-  margin: auto 10px 26px 0; padding: 4px; background: var(--surface);
+  margin: auto 10px 26px 0; padding: 4px; background: var(--surface); border-radius: 18px;
   box-shadow: 10px 10px 0 -1px var(--ink), 10px 10px 0 0 var(--accent-deep);
   transform: rotate(-1deg); transition: transform .3s ease;
 }
@@ -237,7 +237,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 @media (max-width: 960px) { .video-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .video-grid { grid-template-columns: 1fr; } }
 .video { margin: 0; }
-.video-frame { position: relative; aspect-ratio: 16/9; background: var(--surface); overflow: hidden; }
+.video-frame { position: relative; aspect-ratio: 16/9; background: var(--surface); overflow: hidden; border-radius: 14px; }
 .video-frame img { width: 100%; height: 100%; object-fit: cover; }
 .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .video-play {
@@ -397,11 +397,11 @@ p { margin: 0 0 1em; max-width: 62ch; }
   transition: transform .7s cubic-bezier(.2, .7, .2, 1), opacity .5s ease, filter .5s ease;
   cursor: pointer;
 }
-.carousel-card .video-frame { box-shadow: 0 30px 60px rgba(2, 2, 8, .6); outline: 1px solid rgba(179, 157, 219, .28); outline-offset: -1px; }
+.carousel-card .video-frame { box-shadow: 0 30px 60px rgba(2, 2, 8, .6); outline: 1px solid rgba(118, 219, 227, .28); outline-offset: -1px; }
 .carousel-card:not(.is-active) { filter: brightness(.45) saturate(.7); }
 .carousel-card:not(.is-active) .video-play { pointer-events: none; opacity: 0; }
 .carousel-card.is-active { cursor: default; }
-.carousel-card.is-active .video-frame { outline-color: rgba(179, 157, 219, .6); }
+.carousel-card.is-active .video-frame { outline-color: rgba(118, 219, 227, .6); }
 .carousel-card.is-far { opacity: 0; pointer-events: none; }
 .carousel-card figcaption { text-align: center; transition: opacity .4s ease; }
 .carousel-card:not(.is-active) figcaption { opacity: 0; }
