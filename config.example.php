@@ -16,10 +16,8 @@ return [
         'password' => 'replace-with-cpanel-password',
         'from' => 'info@reecemusic.com'
     ],
-    // MIDI store (midi.php)
+    // Free MIDI downloads (midi.php)
     'midi' => [
-        'stripe_secret_key' => 'replace-with-stripe-secret-key', // sk_test_… for testing, sk_live_… for real payments
-        'token_secret' => 'replace-with-a-long-random-string',   // 32+ characters
         'files_dir' => '/home/reecemus/midi-files'               // private folder outside public_html
     ]
 ];

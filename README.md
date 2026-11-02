@@ -3,7 +3,7 @@
 The site is static HTML on Tasjeel cPanel (`/home/reecemus/public_html`), with two PHP scripts:
 
 - `contact.php` emails contact-form enquiries to info@reecemusic.com and saves mailing-list signups in MySQL (then sends a welcome email).
-- `midi.php` runs the MIDI store (see below).
+- `midi.php` serves the free MIDI downloads (see below).
 
 Pushing to `main` deploys through `.github/workflows/deploy.yml` (SSH upload). It needs these repository secrets:
 `CPANEL_HOST`, `CPANEL_PORT`, `CPANEL_USER`, `CPANEL_SSH_KEY`, `CPANEL_KNOWN_HOSTS`.
@@ -22,20 +22,15 @@ Hero playlist and performance films are set in `js/config.js`.
 Until `config.php` is in place, the forms open a pre-filled email to info@reecemusic.com instead, so nothing is lost.
 `tools/` holds local email-preview and SMTP diagnostic helpers; they are not deployed.
 
-## MIDI store ("Play it yourself")
+## Free MIDI ("Play it yourself")
 
-Pages: `learn.html` (all songs), `song.html?id=…` (one song), `purchase-complete.html` (after Stripe).
-Songs and prices: `data/midi-songs.json` (prices in cents; the `data/` folder is blocked from the web by its `.htaccess`).
+Pages: `learn.html` (all songs) and `song.html?id=…` (one song: MIDI download, YouTube tutorial, PayPal donate).
+Songs: `data/midi-songs.json` (the `data/` folder is blocked from the web by its `.htaccess`).
+Each song has an `id`, `title`, `artist`, `description`, `youtubeId` (the 11-character video ID) and `file`.
 
 MIDI files must never be in this public repo or in `public_html`. Upload them to the private folder set as
-`midi.files_dir` in `config.php` (default `/home/reecemus/midi-files`), named exactly as in `midi-songs.json`
-(e.g. `clocks-free.mid`, `clocks-chorus.mid`, `clocks-full.mid`). Buyers get a 24-hour download link after a verified payment.
+`midi.files_dir` in `config.php` (default `/home/reecemus/midi-files`), named exactly as `file` in `midi-songs.json`.
 
-Also set in `config.php` → `midi`:
+Donate buttons use the PayPal link in `js/config.js` (`paypal`). While it is empty, every Donate button stays hidden.
 
-| Key | Value |
-| --- | --- |
-| `stripe_secret_key` | Stripe secret key (`sk_test_…` for testing, `sk_live_…` to take real payments) |
-| `token_secret` | Any long random string (32+ characters) |
-
-To add a song: add an entry to `data/midi-songs.json` and upload its three files to the private folder.
+To add a song: add an entry to `data/midi-songs.json` and upload its MIDI file to the private folder.

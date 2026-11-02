@@ -9,6 +9,10 @@ window.REECE = {
 
   email: "info@reecemusic.com",
 
+  // Donate buttons on the MIDI pages. Paste Reece's PayPal link, e.g. "https://www.paypal.com/donate/?hosted_button_id=…"
+  // or "https://paypal.me/…". Leave empty to hide every Donate button.
+  paypal: "",
+
   // Performance films on the Sight & Sound page (YouTube video IDs).
   videos: [
     { youtube: "bRUzXkX8eEs", title: "Reece Piano", note: "Ambient piano with expressive, intimate arrangements." },
