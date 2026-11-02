@@ -90,8 +90,10 @@
     galleries.forEach(function (host) {
       var name = host.getAttribute("data-video-gallery");
       var set = vids.filter(function (v) { return v.gallery === name; });
-      host.closest(".video-set").hidden = !set.length;
+      var note = host.getAttribute("data-empty-note");
+      host.closest(".video-set").hidden = !set.length && !note;
       if (set.length) buildCarousel(host, set);
+      else if (note) { host.className = "video-soon"; host.innerHTML = '<div class="vinyl-mini" aria-hidden="true"></div><p>' + escapeHtml(note) + "</p>"; }
     });
   }
 

@@ -15,7 +15,7 @@ window.REECE = {
 
   // Recorded performances on the Sight & Sound page, shown in three galleries.
   // youtube: the 11-character video ID (the part after "youtu.be/" or "v=").
-  // gallery: "piano", "ukulele" or "electronica". title and note are optional.
+  // gallery: "piano", "ukulele", "electronica" or "original" (Original Music). title and note are optional.
   videos: [
     { gallery: "piano", youtube: "bRUzXkX8eEs", title: "Ambient piano", note: "Expressive, intimate arrangements." },
     { gallery: "piano", youtube: "vrkOTYjy8oI", title: "Played by ear" },
