@@ -194,7 +194,9 @@
   var safeYt = function (id) { return /^[A-Za-z0-9_-]{11}$/.test(id || "") ? id : ""; };
   var paypal = /^https:\/\/(www\.)?(paypal\.com|paypal\.me)\//.test(cfg.paypal || "") ? cfg.paypal : "";
   var donateBtn = function (cls) {
-    return paypal ? '<a class="btn ' + cls + '" href="' + escapeHtml(paypal) + '" target="_blank" rel="noopener">Donate via PayPal</a>' : "";
+    // Until a PayPal link is set in config.js this is an inert placeholder, so the layout can be previewed.
+    return paypal ? '<a class="btn ' + cls + '" href="' + escapeHtml(paypal) + '" target="_blank" rel="noopener">Donate via PayPal</a>'
+      : '<span class="btn ' + cls + '" aria-disabled="true" title="Donations open soon">Donate via PayPal</span>';
   };
 
   // Any static [data-donate] link takes the PayPal address from config.js, and stays hidden until one is set.
@@ -257,8 +259,8 @@
                 '<a class="btn btn-brass" href="/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) + '">Download MIDI</a></li>' +
               (yt ? '<li><div><strong>Video tutorial</strong><span class="muted">Reece plays it through, step by step</span></div>' +
                 '<a class="btn btn-ghost" href="https://www.youtube.com/watch?v=' + yt + '" target="_blank" rel="noopener">Watch on YouTube</a></li>' : "") +
-              (paypal ? '<li><div><strong>Support Reece</strong><span class="muted">If the file helps, a donation keeps new ones coming</span></div>' +
-                donateBtn("btn-ghost") + "</li>" : "") +
+              '<li><div><strong>Support Reece</strong><span class="muted">If the file helps, a donation keeps new ones coming</span></div>' +
+                donateBtn("btn-ghost") + "</li>" +
             "</ul></div></div></section>";
       })
       .catch(notFound);
