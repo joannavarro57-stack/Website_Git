@@ -187,7 +187,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .voice h3 em { color: var(--accent); }
 .voice p { color: var(--muted); margin-bottom: 24px; }
 .voice-film {
-  margin: auto 10px 26px 0; padding: 4px; background: var(--surface); border-radius: 18px;
+  margin: auto 10px 26px 0; padding: 18px; background: var(--surface); border-radius: 32px;
   box-shadow: 10px 10px 0 -1px var(--ink), 10px 10px 0 0 var(--accent-deep);
   transform: rotate(-1deg); transition: transform .3s ease;
 }
