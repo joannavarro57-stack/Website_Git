@@ -184,6 +184,13 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .voice { padding: 28px 28px 8px 0; display: flex; flex-direction: column; }
 .voice + .voice { border-left: 1px solid var(--line); padding-left: 28px; }
 .voice h3 { margin-bottom: 10px; }
+.voice h3 a { position: relative; display: inline-block; color: inherit; text-decoration: none; }
+.voice h3 a::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -0.16em; height: 1px;
+  background: linear-gradient(90deg, var(--accent-deep), var(--accent), transparent);
+  transform: scaleX(.72); transform-origin: left; opacity: .8; transition: transform .25s, opacity .25s;
+}
+.voice h3 a:hover::after, .voice h3 a:focus-visible::after { transform: scaleX(1); opacity: 1; }
 .voice h3 em { color: var(--accent); }
 .voice p { color: var(--muted); margin-bottom: 24px; }
 .voice-film {
