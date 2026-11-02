@@ -179,13 +179,13 @@ p { margin: 0 0 1em; max-width: 62ch; }
 
 /* ---------- three voices ---------- */
 .voices { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--accent-deep); }
-.voice { padding: 28px 28px 8px 0; }
+.voice { padding: 28px 28px 8px 0; display: flex; flex-direction: column; }
 .voice + .voice { border-left: 1px solid var(--line); padding-left: 28px; }
 .voice h3 { margin-bottom: 10px; }
 .voice h3 em { color: var(--accent); }
-.voice p { color: var(--muted); }
+.voice p { color: var(--muted); margin-bottom: 24px; }
 .voice-film {
-  margin: 24px 10px 26px 0; padding: 4px; background: var(--surface);
+  margin: auto 10px 26px 0; padding: 4px; background: var(--surface);
   box-shadow: 10px 10px 0 -1px var(--ink), 10px 10px 0 0 var(--accent-deep);
   transform: rotate(-1deg); transition: transform .3s ease;
 }
