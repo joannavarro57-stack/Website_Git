@@ -45,11 +45,18 @@ jobs:
           printf '%s\n' "$CPANEL_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/cpanel_deploy" "$HOME/.ssh/known_hosts"
 
-          git archive --format=tar HEAD \
-            index.html sight-and-sound.html gigs.html shop.html about.html \
-            artwork.html events.html recordings.html services.html contact.html \
-            learn.html song.html purchase-complete.html 404.html \
-            contact.php midi.php favicon.png robots.txt sitemap.xml css js images data \
+          # Files and folders to publish. Anything listed here that no longer exists is skipped,
+          # so deleting a page can't break the deploy.
+          wanted="index.html sight-and-sound.html gigs.html shop.html about.html
+            artwork.html events.html recordings.html services.html contact.html
+            learn.html song.html 404.html
+            contact.php midi.php favicon.png robots.txt sitemap.xml css js images data"
+          paths=()
+          for p in $wanted; do
+            if git cat-file -e "HEAD:$p" 2>/dev/null; then paths+=("$p"); else echo "::warning::Skipping $p (not in the repository)"; fi
+          done
+
+          git archive --format=tar HEAD "${paths[@]}" \
             | gzip \
             | ssh \
                 -i "$HOME/.ssh/cpanel_deploy" \
