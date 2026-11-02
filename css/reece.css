@@ -381,3 +381,47 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .art-frame img, .lightbox img {
   -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
+
+/* ---------- recorded performances: 3D carousel ---------- */
+.carousel { --card: min(620px, 64%); --shift: 62%; --tilt: 34deg; --depth: 220px; outline: none; }
+.carousel:focus-visible { outline: 2px solid var(--accent); outline-offset: 8px; }
+.carousel-stage {
+  display: grid; justify-items: center; align-items: start;
+  perspective: 1600px; perspective-origin: 50% 40%;
+  padding: 8px 0 4px; overflow: hidden;
+}
+.carousel-card {
+  grid-area: 1 / 1; width: var(--card); margin: 0;
+  transform: translateX(calc(var(--d, 0) * var(--shift))) translateZ(calc(var(--a, 0) * var(--depth) * -1)) rotateY(calc(var(--d, 0) * var(--tilt) * -1));
+  transform-style: preserve-3d;
+  transition: transform .7s cubic-bezier(.2, .7, .2, 1), opacity .5s ease, filter .5s ease;
+  cursor: pointer;
+}
+.carousel-card .video-frame { box-shadow: 0 30px 60px rgba(2, 2, 8, .6); outline: 1px solid rgba(179, 157, 219, .28); outline-offset: -1px; }
+.carousel-card:not(.is-active) { filter: brightness(.45) saturate(.7); }
+.carousel-card:not(.is-active) .video-play { pointer-events: none; opacity: 0; }
+.carousel-card.is-active { cursor: default; }
+.carousel-card.is-active .video-frame { outline-color: rgba(179, 157, 219, .6); }
+.carousel-card.is-far { opacity: 0; pointer-events: none; }
+.carousel-card figcaption { text-align: center; transition: opacity .4s ease; }
+.carousel-card:not(.is-active) figcaption { opacity: 0; }
+.carousel.is-single .carousel-card { cursor: default; }
+
+.carousel-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 22px; }
+.carousel-arrow {
+  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  background: transparent; color: var(--mist); border: 1px solid rgba(207, 216, 220, .35);
+  font-size: 1.6rem; line-height: 1; transition: border-color .2s, color .2s;
+}
+.carousel-arrow span { margin-top: -3px; }
+.carousel-arrow:hover { border-color: var(--accent); color: var(--accent); }
+.carousel-dots { display: flex; gap: 10px; }
+.carousel-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 1px solid var(--accent); background: transparent; cursor: pointer; transition: background .2s, transform .2s; }
+.carousel-dots button[aria-current="true"] { background: var(--accent); transform: scale(1.2); }
+
+@media (max-width: 760px) {
+  .carousel { --card: 78%; --shift: 58%; --tilt: 40deg; --depth: 160px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carousel-card, .carousel-card figcaption { transition: none; }
+}

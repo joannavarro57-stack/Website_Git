@@ -82,33 +82,113 @@
 
   document.querySelectorAll("[data-spotify-link]").forEach(function (a) { if (cfg.spotify) a.href = cfg.spotify; });
 
-  /* ---------- recorded performances ---------- */
+  /* ---------- recorded performances: one 3D carousel per gallery ---------- */
   var galleries = document.querySelectorAll("[data-video-gallery]");
   if (galleries.length) {
     var vids = (cfg.videos || []).filter(function (v) { return v && /^[A-Za-z0-9_-]{11}$/.test(v.youtube || ""); });
     if (!vids.length) document.getElementById("video-empty").hidden = false;
-    galleries.forEach(function (grid) {
-      var set = vids.filter(function (v) { return v.gallery === grid.getAttribute("data-video-gallery"); });
-      grid.closest(".video-set").hidden = !set.length;
-      set.forEach(function (v) {
-        var label = v.title || "Reece Music performance";
-        var fig = document.createElement("figure");
-        fig.className = "video";
-        fig.innerHTML =
-          '<div class="video-frame">' +
-            '<img src="https://i.ytimg.com/vi/' + v.youtube + '/hqdefault.jpg" alt="" loading="lazy">' +
-            '<button class="video-play" type="button" aria-label="Play ' + escapeHtml(label) + '"><span></span></button>' +
-          "</div>" +
-          (v.title || v.note ? "<figcaption>" + (v.title ? "<strong>" + escapeHtml(v.title) + "</strong>" : "") +
-            (v.note ? '<span class="muted">' + escapeHtml(v.note) + "</span>" : "") + "</figcaption>" : "");
-        fig.querySelector(".video-play").addEventListener("click", function () {
-          var frame = fig.querySelector(".video-frame");
-          frame.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + v.youtube +
-            '?autoplay=1&rel=0" title="' + escapeHtml(label) + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
-        });
-        grid.appendChild(fig);
-      });
+    galleries.forEach(function (host) {
+      var name = host.getAttribute("data-video-gallery");
+      var set = vids.filter(function (v) { return v.gallery === name; });
+      host.closest(".video-set").hidden = !set.length;
+      if (set.length) buildCarousel(host, set);
     });
+  }
+
+  function buildCarousel(host, set) {
+    var titleEl = host.closest(".video-set").querySelector(".video-set-title");
+    var label = (titleEl ? titleEl.textContent.trim() : "Reece Music") + " performances";
+    host.className = "carousel" + (set.length === 1 ? " is-single" : "");
+    host.setAttribute("role", "region");
+    host.setAttribute("aria-roledescription", "carousel");
+    host.setAttribute("aria-label", label);
+    host.innerHTML = '<div class="carousel-stage"></div>';
+    var stage = host.firstChild, active = 0;
+
+    var thumb = function (v) {
+      return '<img src="https://i.ytimg.com/vi/' + v.youtube + '/hqdefault.jpg" alt="" loading="lazy">' +
+        '<button class="video-play" type="button" aria-label="Play ' + escapeHtml(v.title || "performance") + '"><span></span></button>';
+    };
+    var cards = set.map(function (v, i) {
+      var fig = document.createElement("figure");
+      fig.className = "video carousel-card";
+      fig.setAttribute("role", "group");
+      fig.setAttribute("aria-roledescription", "slide");
+      fig.setAttribute("aria-label", (i + 1) + " of " + set.length + (v.title ? ": " + v.title : ""));
+      fig.innerHTML = '<div class="video-frame">' + thumb(v) + "</div>" +
+        (v.title || v.note ? "<figcaption>" + (v.title ? "<strong>" + escapeHtml(v.title) + "</strong>" : "") +
+          (v.note ? '<span class="muted">' + escapeHtml(v.note) + "</span>" : "") + "</figcaption>" : "");
+      fig.addEventListener("click", function (e) {
+        if (i !== active) { e.preventDefault(); go(i); return; }
+        if (e.target.closest(".video-play")) {
+          fig.querySelector(".video-frame").innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + v.youtube +
+            '?autoplay=1&rel=0" title="' + escapeHtml(v.title || "Reece Music performance") +
+            '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+          fig.classList.add("is-playing");
+        }
+      });
+      stage.appendChild(fig);
+      return fig;
+    });
+
+    if (set.length > 1) {
+      var nav = document.createElement("div");
+      nav.className = "carousel-nav";
+      nav.innerHTML = '<button class="carousel-arrow" type="button" data-step="-1" aria-label="Previous video"><span aria-hidden="true">&#8249;</span></button>' +
+        '<div class="carousel-dots">' + set.map(function (v, i) {
+          return '<button type="button" data-go="' + i + '" aria-label="Show video ' + (i + 1) + (v.title ? ": " + escapeHtml(v.title) : "") + '"></button>';
+        }).join("") + "</div>" +
+        '<button class="carousel-arrow" type="button" data-step="1" aria-label="Next video"><span aria-hidden="true">&#8250;</span></button>';
+      host.appendChild(nav);
+      nav.addEventListener("click", function (e) {
+        var b = e.target.closest("button"); if (!b) return;
+        if (b.hasAttribute("data-step")) go(active + Number(b.getAttribute("data-step")));
+        else go(Number(b.getAttribute("data-go")));
+      });
+      host.tabIndex = 0;
+      host.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowLeft") { e.preventDefault(); go(active - 1); }
+        if (e.key === "ArrowRight") { e.preventDefault(); go(active + 1); }
+      });
+      var x0 = null;
+      stage.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+      stage.addEventListener("touchend", function (e) {
+        if (x0 === null) return;
+        var dx = e.changedTouches[0].clientX - x0; x0 = null;
+        if (Math.abs(dx) > 40) go(active + (dx < 0 ? 1 : -1));
+      });
+    }
+
+    function go(i) {
+      var n = set.length;
+      i = ((i % n) + n) % n;
+      if (i !== active && cards[active].classList.contains("is-playing")) {   // stop the video we move away from
+        cards[active].querySelector(".video-frame").innerHTML = thumb(set[active]);
+        cards[active].classList.remove("is-playing");
+      }
+      active = i;
+      layout();
+    }
+
+    function layout() {
+      var n = set.length;
+      cards.forEach(function (card, i) {
+        var d = i - active;
+        if (n > 2) { if (d > n / 2) d -= n; if (d < -n / 2) d += n; }       // wrap so neighbours sit on both sides
+        var a = Math.abs(d);
+        card.style.setProperty("--d", d);
+        card.style.setProperty("--a", a);
+        card.style.zIndex = String(10 - a);
+        card.classList.toggle("is-active", d === 0);
+        card.classList.toggle("is-far", a > 2);
+        card.setAttribute("aria-hidden", d === 0 ? "false" : "true");
+        card.querySelectorAll("button, iframe").forEach(function (el) { el.tabIndex = d === 0 ? 0 : -1; });
+      });
+      host.querySelectorAll(".carousel-dots button").forEach(function (b, i) {
+        b.setAttribute("aria-current", i === active ? "true" : "false");
+      });
+    }
+    layout();
   }
 
   /* ---------- Play it yourself: free MIDI, YouTube tutorial, PayPal donation ---------- */
