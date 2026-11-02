@@ -23,6 +23,7 @@ body {
   margin: 0;
   background: var(--ink);
   color: var(--mist);
+  overflow-x: clip;
   font-family: var(--body);
   font-size: 1.0625rem;
   line-height: 1.6;
@@ -398,29 +399,34 @@ p { margin: 0 0 1em; max-width: 62ch; }
   cursor: pointer;
 }
 .carousel-card .video-frame { box-shadow: 0 30px 60px rgba(2, 2, 8, .6); outline: 1px solid rgba(118, 219, 227, .28); outline-offset: -1px; }
-.carousel-card:not(.is-active) { filter: brightness(.45) saturate(.7); }
+.carousel-card:not(.is-active) { filter: brightness(.35) saturate(.6); }
 .carousel-card:not(.is-active) .video-play { pointer-events: none; opacity: 0; }
 .carousel-card.is-active { cursor: default; }
-.carousel-card.is-active .video-frame { outline-color: rgba(118, 219, 227, .6); }
+.carousel-card.is-active .video-frame { outline: 2px solid var(--accent); outline-offset: -2px; box-shadow: 0 0 0 4px rgba(118, 219, 227, .14), 0 0 48px rgba(118, 219, 227, .28), 0 30px 60px rgba(2, 2, 8, .6); }
 .carousel-card.is-far { opacity: 0; pointer-events: none; }
 .carousel-card figcaption { text-align: center; transition: opacity .4s ease; }
 .carousel-card:not(.is-active) figcaption { opacity: 0; }
 .carousel.is-single .carousel-card { cursor: default; }
 
-.carousel-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 22px; }
+.carousel-nav { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; }
 .carousel-arrow {
-  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
   background: transparent; color: var(--mist); border: 1px solid rgba(207, 216, 220, .35);
-  font-size: 1.6rem; line-height: 1; transition: border-color .2s, color .2s;
+  font-size: 1rem; line-height: 1; transition: border-color .2s, color .2s;
 }
-.carousel-arrow span { margin-top: -3px; }
+.carousel-arrow span { margin-top: -1px; }
 .carousel-arrow:hover { border-color: var(--accent); color: var(--accent); }
-.carousel-dots { display: flex; gap: 10px; }
-.carousel-dots button { width: 9px; height: 9px; padding: 0; border-radius: 50%; border: 1px solid var(--accent); background: transparent; cursor: pointer; transition: background .2s, transform .2s; }
+.carousel-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-width: 0; }
+.carousel-count { display: none; min-width: 44px; text-align: center; color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; }
+.carousel-nav.has-many .carousel-dots { display: none; }
+.carousel-nav.has-many .carousel-count { display: block; }
+.carousel-dots button { width: 6px; height: 6px; padding: 0; border-radius: 50%; border: 1px solid var(--accent); background: transparent; cursor: pointer; transition: background .2s, transform .2s; }
 .carousel-dots button[aria-current="true"] { background: var(--accent); transform: scale(1.2); }
 
 @media (max-width: 760px) {
-  .carousel { --card: 78%; --shift: 58%; --tilt: 40deg; --depth: 160px; }
+  .carousel { --card: 88%; --shift: 54%; --tilt: 40deg; --depth: 160px; }
+  .carousel-dots { display: none; }
+  .carousel-count { display: block; }
 }
 @media (prefers-reduced-motion: reduce) {
   .carousel-card, .carousel-card figcaption { transition: none; }

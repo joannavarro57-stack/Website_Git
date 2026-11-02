@@ -135,11 +135,12 @@
 
     if (set.length > 1) {
       var nav = document.createElement("div");
-      nav.className = "carousel-nav";
+      nav.className = "carousel-nav" + (set.length > 12 ? " has-many" : "");
       nav.innerHTML = '<button class="carousel-arrow" type="button" data-step="-1" aria-label="Previous video"><span aria-hidden="true">&#8249;</span></button>' +
         '<div class="carousel-dots">' + set.map(function (v, i) {
           return '<button type="button" data-go="' + i + '" aria-label="Show video ' + (i + 1) + (v.title ? ": " + escapeHtml(v.title) : "") + '"></button>';
         }).join("") + "</div>" +
+        '<span class="carousel-count" aria-hidden="true"></span>' +
         '<button class="carousel-arrow" type="button" data-step="1" aria-label="Next video"><span aria-hidden="true">&#8250;</span></button>';
       host.appendChild(nav);
       nav.addEventListener("click", function (e) {
@@ -189,6 +190,8 @@
       host.querySelectorAll(".carousel-dots button").forEach(function (b, i) {
         b.setAttribute("aria-current", i === active ? "true" : "false");
       });
+      var count = host.querySelector(".carousel-count");
+      if (count) count.textContent = (active + 1) + " / " + n;
     }
     layout();
   }
