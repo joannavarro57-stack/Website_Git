@@ -96,17 +96,21 @@
       ctx.fillRect(-2.2 * scale, -2.2 * scale, 4.4 * scale, 4.4 * scale);
       ctx.restore();
     };
-    // the far (front = false) or near (front = true) part of an orbit's ring
-    var ring = function (cx, cy, o, r, drift, front, alpha) {
-      ctx.beginPath();
-      var prev = null;
-      for (var a = 0; a <= 64; a++) {
-        var p = orbitPoint(o, a / 64 * 2 * Math.PI, r, drift), on = (p.z > 0) === front;
-        if (on && prev) ctx.lineTo(cx + p.x, cy - p.y);
-        else if (on) ctx.moveTo(cx + p.x, cy - p.y);
-        prev = on ? p : null;
+    // Each satellite trails a line of music notes along its orbit instead of a drawn ring: a random mix of
+    // crotchets, quavers and beamed pairs, picked afresh on every visit, that fade out the further back they are.
+    var GLYPHS = ["♩", "♪", "♫", "♬"], TRAIL = 6, TRAIL_GAP = 0.24;
+    ORBITS.forEach(function (o) {
+      o.notes = [];
+      for (var k = 0; k < o.sats; k++) {
+        var line = [];
+        for (var j = 0; j < TRAIL; j++) line.push(GLYPHS[Math.floor(Math.random() * GLYPHS.length)]);
+        o.notes.push(line);
       }
-      ctx.strokeStyle = "rgba(207, 236, 240, " + alpha + ")"; ctx.lineWidth = 1; ctx.stroke();
+    });
+    var note = function (n) {
+      ctx.globalAlpha = n.alpha;
+      ctx.font = Math.round(n.size) + 'px "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", serif';
+      ctx.fillText(n.glyph, n.x, n.y);
     };
     var drawViz = function (dt, level, t) {
       if (!ctx) return;
@@ -124,18 +128,30 @@
       });
 
       // where every satellite is, and whether it's on the near or far side of the globe
-      var near = [], far = [];
+      // and the trail of notes behind each one
+      var near = [], far = [], nearNotes = [], farNotes = [];
       ORBITS.forEach(function (o) {
         for (var k = 0; k < o.sats; k++) {
           var th = spin * o.rate + o.offset + k * 2 * Math.PI / o.sats;
           var a = orbitPoint(o, th, R * o.size, drift), b = orbitPoint(o, th + 0.02, R * o.size, drift);
           var p = { x: cx + a.x, y: cy - a.y, z: a.z / (R * o.size), angle: Math.atan2(a.y - b.y, b.x - a.x) };
           (a.z > 0 ? near : far).push(p);
+          for (var j = 0; j < TRAIL; j++) {
+            var q = orbitPoint(o, th - (j + 1) * TRAIL_GAP, R * o.size, drift), d = q.z / (R * o.size);
+            var fade = 1 - j / TRAIL;
+            (q.z > 0 ? nearNotes : farNotes).push({
+              x: cx + q.x, y: cy - q.y, glyph: o.notes[k][j],
+              size: (q.z > 0 ? 9 + 3 * d : 7 + 1.5 * (1 + d)), alpha: (q.z > 0 ? 0.85 : 0.3) * fade
+            });
+          }
         }
       });
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
 
-      // far halves of the orbits and the satellites on them, then the globe over them
-      ORBITS.forEach(function (o) { ring(cx, cy, o, R * o.size, drift, false, 0.16); });
+      // far halves of the note trails and the satellites on them, then the globe over them
+      ctx.fillStyle = "#CFECF0";
+      farNotes.forEach(note);
+      ctx.globalAlpha = 1;
       far.forEach(function (p) { satellite(p.x, p.y, p.angle, 0.62 + 0.18 * (1 + p.z), 0.5); });
 
       // The Earth as a see-through wire mesh: lines of latitude and longitude with the coastlines traced on top.
@@ -193,8 +209,10 @@
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
       ctx.strokeStyle = "rgba(162, 232, 238, .6)"; ctx.lineWidth = 1.2; ctx.stroke();
 
-      // near halves of the orbits and their satellites, in front of the globe
-      ORBITS.forEach(function (o) { ring(cx, cy, o, R * o.size, drift, true, 0.38); });
+      // near halves of the note trails and their satellites, in front of the globe
+      ctx.fillStyle = "#E1FCFF";
+      nearNotes.forEach(note);
+      ctx.globalAlpha = 1;
       near.sort(function (a, b) { return a.z - b.z; });
       near.forEach(function (p) { satellite(p.x, p.y, p.angle, 0.8 + 0.25 * p.z, 1); });
 
