@@ -435,9 +435,17 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .tiers li > .btn:last-child { grid-column: 2; justify-self: end; }
 .tier-side { grid-column: 2; grid-row: 1; align-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .tier-or { color: var(--muted); font-size: .92rem; }
+/* phones: the title with "Free" beside it, then download · or · donate as two equal buttons on one line */
 @media (max-width: 520px) {
-  .tier-side { grid-column: 1 / -1; grid-row: auto; align-items: flex-start; }
-  .tiers li > .btn, .tiers li > .btn:last-child { grid-column: 1 / -1; grid-row: auto; justify-self: start; }
+  .tiers li { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px 10px; padding: 20px 0; }
+  .tiers li > div { grid-column: 1 / -1; grid-row: 1; }
+  .tiers li > div strong { padding-right: 52px; }
+  .tier-side { display: contents; }
+  .tier-price { grid-column: 3; grid-row: 1; justify-self: end; align-self: start; }
+  .tier-or { grid-column: 2; grid-row: 2; }
+  .tiers li > .btn, .tiers li > .btn:last-child { grid-column: 1; grid-row: 2; justify-self: stretch; padding: 11px 8px; font-size: .9rem; text-align: center; }
+  .tiers li > .btn:last-child { grid-column: 3; }
+  .tiers li > div strong { font-size: 1.2rem; }
 }
 .tiers li.is-featured strong { color: var(--accent); }
 .btn:disabled { opacity: .6; cursor: progress; }
@@ -556,4 +564,63 @@ body { -webkit-tap-highlight-color: rgba(118, 219, 227, .18); }
   .reveal.is-in > .wrap > :nth-child(n+4) { transition-delay: .34s; }
   /* Swipes on a carousel move the carousel, not the page */
   .carousel-stage { touch-action: pan-y pinch-zoom; }
+
+  /* Neater phone layout: a tighter vertical rhythm, calmer type and tidier rows */
+  .section { padding: 56px 0; }
+  .page-hero { padding: 44px 0 32px; }
+  .page-hero h1 { margin-bottom: 14px; }
+  .section-head { gap: 14px; margin-bottom: 28px; }
+  h1 { font-size: clamp(2.4rem, 11vw, 3rem); line-height: 1.02; }
+  h2 { font-size: clamp(1.75rem, 8vw, 2.15rem); line-height: 1.1; }
+  h3 { font-size: 1.3rem; }
+  .lede { font-size: 1.06rem; }
+  /* hero: the video gets its own square at the top, framed on Reece at the piano, fading into the copy below */
+  .hero { display: block; padding: 0 0 48px; }
+  .hero-media { position: relative; inset: auto; aspect-ratio: 1; }
+  .hero-media video { object-position: 31% 62%; }
+  .hero-scrim { bottom: auto; aspect-ratio: 1; background: linear-gradient(180deg, rgba(4, 5, 14, 0.35), rgba(4, 5, 14, 0) 22%, rgba(4, 5, 14, 0) 62%, var(--ink)); }
+  .hero .wrap { margin-top: -64px; }
+  .hero h1 { font-size: clamp(3rem, 15vw, 4rem); margin-bottom: 18px; }
+  .hero .lede { margin-bottom: 24px; }
+  .sleeve { padding: 18px 16px 16px; }
+  .voice { padding: 24px 0 4px; }
+  .voice + .voice { padding-left: 0; }
+  .voice p { margin-bottom: 18px; }
+  .voice-film { transform: none; margin: auto 3px 10px 0; }
+  .video-set-title { padding-bottom: 10px; margin-bottom: 18px; }
+  .split { gap: 28px; }
+  .split img { aspect-ratio: 4/3; }
+
+  /* call-to-action pairs share the width evenly instead of wrapping one under the other */
+  .btn { padding: 13px 22px; }
+  .btn-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .invite .wrap { gap: 22px; }
+  .invite .btn-row { width: 100%; grid-template-columns: 1fr; }
+
+  /* jump links on Sight & Sound: one line that scrolls sideways */
+  .anchor-tabs { flex-wrap: nowrap; overflow-x: auto; gap: 8px; margin: 22px calc(var(--gutter) * -1) 0; padding: 2px var(--gutter); scrollbar-width: none; }
+  .anchor-tabs::-webkit-scrollbar { display: none; }
+  .anchor-tabs .btn { flex: none; padding: 9px 16px; font-size: .92rem; }
+
+  /* artwork: price under the title so two-word names don't squeeze it */
+  .art-grid, .art-grid.is-strip { gap: 22px 14px; }
+  .art figcaption { flex-direction: column; gap: 2px; margin-top: 10px; }
+  .art-title { font-size: 1.05rem; }
+  .art .text-link { font-size: .88rem; margin-top: 6px; }
+
+  /* cards */
+  .record { padding: 20px; gap: 12px; }
+  .record .disc { width: 56px; height: 56px; }
+  .record-video { margin: -4px -4px 2px; }
+  .timeline li { padding: 18px 0; }
+  .services div, .steps li { padding-top: 18px; }
+  .brief div { padding-top: 16px; }
+  .empty { gap: 18px; }
+
+  /* footer: two columns of links, less empty space */
+  .site-footer { padding: 44px 0 20px; }
+  .footer-grid { gap: 26px; }
+  .footer-grid h3 + ul { grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  .footer-grid li a { padding: 7px 0; }
+  .footer-base { margin-top: 32px; }
 }
