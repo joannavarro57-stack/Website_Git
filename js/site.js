@@ -259,7 +259,7 @@
                 ? "Free " + songFormats(s).map(function (f) { return DOWNLOADS[f].short; }).join(" · ")
                 : "Files coming soon") +
                 (safeYt(s.youtubeId) ? " · Video tutorial" : "") + "</span>" +
-              '<div class="btn-row"><a class="btn btn-brass" href="' + songHref(s.id) + '">Get the files</a></div>' +
+              '<div class="btn-row"><a class="btn btn-brass record-link" href="' + songHref(s.id) + '">Learn Tutorial</a></div>' +
             "</article>";
           }).join("");
           list.addEventListener("click", function (e) {
@@ -297,9 +297,9 @@
         var downloads = songFormats(s).map(function (f, i) {
           var d = DOWNLOADS[f];
           return "<li" + (i === 0 ? ' class="is-featured"' : "") + "><div><strong>" + d.title + '</strong><span class="muted">' + d.note + "</span></div>" +
-            '<span class="tier-price">Free</span>' +
-            '<a class="btn ' + (i === 0 ? "btn-brass" : "btn-ghost") + '" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) +
-              "&amp;format=" + f + '">' + d.button + '</a><span class="tier-or">or</span>' + donateBtn("btn-ghost") + "</li>";
+            '<span class="tier-side"><span class="tier-price">Free</span><span class="tier-or">or</span>' + donateBtn("btn-ghost") + "</span>" +
+            '<a class="btn btn-ghost" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) +
+              "&amp;format=" + f + '">' + d.button + "</a></li>";
         }).join("") || '<li><div><strong>Downloads coming soon</strong><span class="muted">The MIDI and sheet music for this song are on the way</span></div></li>' +
           '<li><div><strong>Support Reece</strong><span class="muted">A donation keeps new songs coming</span></div><div class="btn-row">' + donateBtn("btn-ghost") + "</div></li>";
         songRoot.innerHTML =
