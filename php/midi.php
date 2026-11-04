@@ -46,7 +46,8 @@ $action = (string) ($_GET['action'] ?? '');
 
 if ($action === 'songs') {
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') sendJson(405, ['error' => 'Method not allowed.']);
-    $cache = 'public, max-age=60';
+    // Never cached, so whatever was just changed on the admin's Songs page shows straight away.
+    $cache = 'no-store';
     try {
         if (isset($_GET['id'])) {
             $song = findSong($_GET['id']);
@@ -74,8 +75,11 @@ if ($action === 'download') {
     $label = FORMATS[$format]['label'];
     $path = storedFile($song, $format);
     if ($path === null) page(404, "This {$label} file is being prepared and isn't uploaded yet. Please check back soon, or email info@reecemusic.com.");
-    $file = basename($path);
-    $type = FORMATS[$format]['types'][strtolower(pathinfo($file, PATHINFO_EXTENSION))] ?? 'application/octet-stream';
+    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    $type = FORMATS[$format]['types'][$extension] ?? 'application/octet-stream';
+    // Saved under the song's current title and artist, e.g. "Jacob and Stone - Minari.pdf".
+    $name = trim(preg_replace('~[\\\\/:*?"<>|\x00-\x1F]+~', '', $song['title'] . ' - ' . $song['artist'])) ?: $song['id'];
+    $ascii = trim(preg_replace('/[^A-Za-z0-9 ._()-]+/', '', $name)) ?: $song['id'];
 
     // Count it for admin.php. Stats must never stop the download, so errors are only logged.
     if (!preg_match('/bot|crawl|spider|slurp|preview|headless/i', (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
@@ -87,7 +91,7 @@ if ($action === 'download') {
     }
 
     header('Content-Type: ' . $type);
-    header('Content-Disposition: attachment; filename="' . $file . '"');
+    header('Content-Disposition: attachment; filename="' . $ascii . '.' . $extension . "\"; filename*=UTF-8''" . rawurlencode($name . '.' . $extension));
     header('Content-Length: ' . filesize($path));
     header('Cache-Control: no-store');
     readfile($path);

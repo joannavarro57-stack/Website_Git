@@ -57,6 +57,7 @@
 .song-card summary h3 { flex: 1 1 260px; }
 .song-card summary h3 small { font-family: var(--body); font-size: .95rem; color: var(--muted); margin-left: 8px; }
 .song-card summary::after { content: "Edit"; color: var(--accent); font-size: .95rem; }
+.song-card.is-new summary::after { content: "Open"; }
 .song-card[open] summary::after { content: "Close"; }
 .song-card[open] summary { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .badges { display: flex; gap: 6px; flex-wrap: wrap; }

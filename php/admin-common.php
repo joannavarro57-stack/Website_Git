@@ -124,7 +124,7 @@ function pageStart(string $title, string $active, bool $signedIn): void
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/reece.css?v=2026-11-admin-link">
-  <link rel="stylesheet" href="../css/admin.css?v=2026-11-songs">
+  <link rel="stylesheet" href="../css/admin.css?v=2026-11-songs-2">
 </head>
 <body>
   <header class="site-header">

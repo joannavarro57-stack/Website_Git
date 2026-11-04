@@ -57,19 +57,74 @@ function youtubeId(string $input): string
     throw new UploadProblem('That YouTube link wasn\'t recognised. Paste the video\'s address, e.g. https://youtu.be/abc123XYZ_0');
 }
 
-function slug(string $title, PDO $pdo): string
+// "Für Elise" → "fur-elise": spell accented letters plainly before dropping everything else.
+function slugBase(string $title): string
 {
-    // "Für Elise" → "fur-elise": spell accented letters plainly before dropping everything else.
     // Some iconv builds spell ü as "u or u", so drop those marks too.
     $ascii = function_exists('iconv') ? (string) @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title) : $title;
     $ascii = str_replace(['"', "'", '`', '^', '~'], '', $ascii);
     $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($ascii)), '-');
-    $base = substr($base !== '' ? $base : 'song', 0, 60);
-    $check = $pdo->prepare('SELECT 1 FROM songs WHERE id = ?');
+    return substr($base !== '' ? $base : 'song', 0, 60);
+}
+
+// A free id for this title: "fur-elise", or "fur-elise-2" when that's taken by another song.
+function slug(string $title, PDO $pdo, string $except = ''): string
+{
+    $base = slugBase($title);
+    $check = $pdo->prepare('SELECT 1 FROM songs WHERE id = ? AND id <> ?');
     for ($id = $base, $n = 2; ; $id = $base . '-' . $n++) {
-        $check->execute([$id]);
+        $check->execute([$id, $except]);
         if (!$check->fetch()) return $id;
     }
+}
+
+// Keeps a song's id (its web address and file names) in step with its title. Download counts move with it.
+// Returns the id the song has afterwards.
+function followTitle(PDO $pdo, array $song, string $title): string
+{
+    $id = $song['id'];
+    $base = slugBase($title);
+    if ($id === $base || preg_match('/^' . preg_quote($base, '/') . '-\d+$/', $id)) return $id;
+    $newId = slug($title, $pdo, $id);
+
+    $renamed = [];   // [from, to] paths, so a failure can put them back
+    $columns = [];
+    try {
+        $dir = filesDir();
+        foreach ($song['files'] as $format => $file) {
+            $newFile = $newId . '.' . strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            $columns[$format] = $newFile;
+            $from = $dir . '/' . basename($file);
+            if (is_file($from)) {
+                if (!rename($from, $dir . '/' . $newFile)) throw new UploadProblem("A file couldn't be renamed to match the new title, so the title wasn't changed.");
+                $renamed[] = [$from, $dir . '/' . $newFile];
+            }
+        }
+    } catch (NotConfigured $e) {
+        foreach ($song['files'] as $format => $file) $columns[$format] = $newId . '.' . strtolower(pathinfo($file, PATHINFO_EXTENSION));
+    } catch (UploadProblem $e) {
+        foreach ($renamed as [$from, $to]) @rename($to, $from);
+        throw $e;
+    }
+
+    try {
+        $pdo->beginTransaction();
+        $sets = ['id = ?'];
+        $values = [$newId];
+        foreach ($columns as $format => $file) {
+            $sets[] = "{$format}_file = ?";
+            $values[] = $file;
+        }
+        $values[] = $id;
+        $pdo->prepare('UPDATE songs SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($values);
+        $pdo->prepare('UPDATE midi_downloads SET song_id = ? WHERE song_id = ?')->execute([$newId, $id]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        foreach ($renamed as [$from, $to]) @rename($to, $from);
+        throw $e;
+    }
+    return $newId;
 }
 
 // Checks the start of the file really is that kind of file, whatever its name says.
@@ -179,6 +234,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'update') {
             $back = 'songs.php?open=' . rawurlencode($id) . '#song-' . rawurlencode($id);
             $details = songDetails();
+            $oldId = $id;
+            $id = followTitle($pdo, $song, $details['title']);
+            if ($id !== $oldId) {
+                $song = findSong($id);
+                $back = 'songs.php?open=' . rawurlencode($id) . '#song-' . rawurlencode($id);
+            }
             $pdo->prepare('UPDATE songs SET title = ?, artist = ?, description = ?, youtube_id = ? WHERE id = ?')
                 ->execute([$details['title'], $details['artist'], $details['description'], $details['youtube_id'], $id]);
             $changes = [];
@@ -302,7 +363,7 @@ pageStart('Songs', 'songs.php', true);
 <?php if ($loadError): ?>
       <p class="notice is-error"><?= h($loadError) ?></p>
 <?php else: ?>
-      <details class="card song-card"<?= !$songs ? ' open' : '' ?>>
+      <details class="card song-card is-new"<?= !$songs ? ' open' : '' ?>>
         <summary><h3>Add a song</h3></summary>
         <form method="post" action="songs.php" enctype="multipart/form-data">
           <?= csrfField() ?>
