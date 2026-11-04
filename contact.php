@@ -144,15 +144,21 @@ if ($mailingList) {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false
         ]);
+        // The email column is unique (and case-insensitive), so a repeat signup inserts nothing.
         $statement = $pdo->prepare(
-            'INSERT INTO mailing_list_subscribers (email, source) VALUES (:email, :source) '
-            . 'ON DUPLICATE KEY UPDATE source = VALUES(source)'
+            'INSERT IGNORE INTO mailing_list_subscribers (email, source) VALUES (:email, :source)'
         );
         $statement->execute(['email' => $email, 'source' => $source]);
+        $alreadySubscribed = $statement->rowCount() === 0;
     } catch (Throwable $error) {
         error_log('Mailing list signup failed: ' . $error->getMessage());
         http_response_code(500);
         echo json_encode(['error' => 'The mailing-list database is unavailable. Check that the table exists and that the database user has access.']);
+        exit;
+    }
+
+    if ($alreadySubscribed) {
+        echo json_encode(['success' => true, 'alreadySubscribed' => true]);
         exit;
     }
 

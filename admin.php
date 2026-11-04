@@ -62,8 +62,8 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $password !== '') {
-    if (hash_equals($password, (string) ($_POST['password'] ?? ''))) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $password !== '' && isset($_POST['password'])) {
+    if (hash_equals($password, (string) $_POST['password'])) {
         session_regenerate_id(true);
         $_SESSION['admin'] = true;
         header('Location: admin.php');
@@ -74,6 +74,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $password !== '') {
 }
 
 $signedIn = $password !== '' && !empty($_SESSION['admin']);
+$_SESSION['csrf'] ??= bin2hex(random_bytes(16));
+
+// Same address in any letter case or with stray spaces counts as one subscriber.
+const SAME_EMAIL = 'LOWER(TRIM(keep.email)) = LOWER(TRIM(extra.email))';
+
+if ($signedIn && ($_POST['action'] ?? '') === 'dedupe' && hash_equals($_SESSION['csrf'], (string) ($_POST['csrf'] ?? ''))) {
+    try {
+        $pdo = db();
+        // Keep each person's first signup (lowest id) and delete the later copies.
+        $removed = $pdo->exec(
+            'DELETE extra FROM mailing_list_subscribers extra JOIN mailing_list_subscribers keep'
+            . ' ON ' . SAME_EMAIL . ' AND keep.id < extra.id'
+        );
+        // Make sure the database refuses repeats from now on (tables made by hand may lack this).
+        $hasUnique = $pdo->query("SHOW INDEX FROM mailing_list_subscribers WHERE Column_name = 'email' AND Non_unique = 0")->fetch();
+        if (!$hasUnique) $pdo->exec('ALTER TABLE mailing_list_subscribers ADD UNIQUE KEY uq_mailing_list_email (email)');
+        $_SESSION['flash'] = $removed === 1 ? 'Removed 1 duplicate subscriber.' : "Removed {$removed} duplicate subscribers.";
+    } catch (Throwable $exception) {
+        error_log('Removing duplicate subscribers failed: ' . $exception->getMessage());
+        $_SESSION['flash'] = 'Something went wrong while removing duplicates. The list below shows what is on it now.';
+    }
+    header('Location: admin.php');
+    exit;
+}
+$flash = $_SESSION['flash'] ?? '';
+unset($_SESSION['flash']);
 
 if ($signedIn && ($_GET['export'] ?? '') === 'subscribers') {
     $rows = db()->query('SELECT email, source, subscribed_at FROM mailing_list_subscribers ORDER BY subscribed_at DESC')->fetchAll();
@@ -97,6 +123,10 @@ if ($signedIn) {
         $pdo = db();
         $data = [
             'subscribers' => $pdo->query('SELECT email, source, subscribed_at FROM mailing_list_subscribers ORDER BY subscribed_at DESC')->fetchAll(),
+            'duplicates' => (int) $pdo->query(
+                'SELECT COUNT(DISTINCT extra.id) FROM mailing_list_subscribers extra JOIN mailing_list_subscribers keep'
+                . ' ON ' . SAME_EMAIL . ' AND keep.id < extra.id'
+            )->fetchColumn(),
             'totals' => $pdo->query(
                 'SELECT COUNT(*) AS total, COALESCE(SUM(clicked_at >= NOW() - INTERVAL 30 DAY), 0) AS recent,'
                 . ' COALESCE(SUM(kind = \'play\'), 0) AS plays, COALESCE(SUM(kind = \'link\'), 0) AS links FROM video_clicks'
@@ -239,6 +269,17 @@ $pageNames = [
         <h2 style="margin:0">Mailing-list subscribers<small><?= count($data['subscribers']) ?></small></h2>
         <?php if ($data['subscribers']): ?><a class="btn btn-ghost" href="admin.php?export=subscribers">Download CSV</a><?php endif; ?>
       </div>
+<?php if ($flash): ?>
+      <p class="notice" role="status" style="margin-bottom:18px"><?= h($flash) ?></p>
+<?php endif; ?>
+<?php if ($data['duplicates']): ?>
+      <form class="notice" method="post" action="admin.php" style="margin-bottom:18px" onsubmit="return confirm('Remove <?= $data['duplicates'] ?> duplicate subscriber(s)? Each person keeps their first signup.')">
+        <p style="margin:0 0 12px"><?= $data['duplicates'] === 1 ? '1 subscriber is listed twice.' : $data['duplicates'] . ' extra copies of the same email addresses are on the list.' ?> Removing them keeps each person's first signup.</p>
+        <input type="hidden" name="action" value="dedupe">
+        <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+        <button class="btn btn-brass" type="submit">Remove duplicates</button>
+      </form>
+<?php endif; ?>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Email</th><th>Signed up from</th><th>Date</th></tr></thead>

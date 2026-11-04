@@ -346,7 +346,9 @@
         .then(function (r) {
           if (r.ok && r.json.success) {
             form.reset();
-            say(kind === "subscribe" ? "You're on the list. Check your inbox for a welcome email." : "Message sent. Reece will reply by email.");
+            say(kind !== "subscribe" ? "Message sent. Reece will reply by email."
+              : r.json.alreadySubscribed ? "You're already on the mailing list with this email. No need to sign up again."
+              : "You're on the list. Check your inbox for a welcome email.");
           } else if (r.json && /not configured/i.test(r.json.error || "")) {
             throw new Error("no-backend");
           } else {
