@@ -306,6 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $flash = takeFlash();
 $songs = [];
 $loadError = '';
+$addressProblems = [];
 try {
     // Songs renamed before ids followed titles catch up here, so every address matches its title.
     $pdo = db();
@@ -314,6 +315,8 @@ try {
             followTitle($pdo, $song, $song['title']);
         } catch (Throwable $e) {
             error_log('Updating the address of "' . $song['title'] . '" failed: ' . $e->getMessage());
+            $addressProblems[] = '"' . $song['title'] . '" still has the address ?id=' . $song['id'] . ' ('
+                . ($e instanceof UploadProblem ? $e->getMessage() : 'the database refused the change: ' . $e->getMessage()) . ')';
         }
     }
     $songs = catalog();
@@ -370,6 +373,9 @@ pageStart('Songs', 'songs.php', true);
 <?php if ($flash): ?>
       <p class="notice<?= $flash['kind'] === 'error' ? ' is-error' : '' ?>" role="status" style="margin-bottom:24px"><?= h($flash['message']) ?></p>
 <?php endif; ?>
+<?php foreach ($addressProblems as $addressProblem): ?>
+      <p class="notice is-error" style="margin-bottom:24px"><?= h($addressProblem) ?></p>
+<?php endforeach; ?>
 <?php if ($dirProblem): ?>
       <p class="notice is-error" style="margin-bottom:24px"><?= h($dirProblem) ?></p>
 <?php endif; ?>
