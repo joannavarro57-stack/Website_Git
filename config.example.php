@@ -16,6 +16,10 @@ return [
         'password' => 'replace-with-cpanel-password',
         'from' => 'info@reecemusic.com'
     ],
+    // Password for the stats page (admin.php). Use a long one; the page stays off while this is a placeholder.
+    'admin' => [
+        'password' => 'replace-with-admin-password'
+    ],
     // Free MIDI downloads (midi.php)
     'midi' => [
         'files_dir' => '/home/reecemus/midi-files'               // private folder outside public_html

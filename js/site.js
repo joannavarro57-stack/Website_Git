@@ -147,6 +147,7 @@
             '?autoplay=1&rel=0" title="' + escapeHtml(v.title || "Reece Music performance") +
             '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
           fig.classList.add("is-playing");
+          trackVideo(v.youtube, "play");
         }
       });
       stage.appendChild(fig);
@@ -278,7 +279,7 @@
               '<li class="is-featured"><div><strong>MIDI file</strong><span class="muted">The full arrangement, for your own keyboard</span></div><span class="tier-price">Free</span>' +
                 '<a class="btn btn-brass" href="/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) + '">Download MIDI</a></li>' +
               (yt ? '<li><div><strong>Video tutorial</strong><span class="muted">Reece plays it through, step by step</span></div>' +
-                '<a class="btn btn-ghost" href="https://www.youtube.com/watch?v=' + yt + '" target="_blank" rel="noopener">Watch on YouTube</a></li>' : "") +
+                '<a class="btn btn-ghost" href="https://www.youtube.com/watch?v=' + yt + '" data-title="' + escapeHtml(s.title) + ' tutorial" target="_blank" rel="noopener">Watch on YouTube</a></li>' : "") +
               '<li><div><strong>Support Reece</strong><span class="muted">If the file helps, a donation keeps new ones coming</span></div>' +
                 donateBtn("btn-ghost") + "</li>" +
             "</ul></div></div></section>";
@@ -371,6 +372,36 @@
       window.location.href = "mailto:" + email + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
       say("Your email app should open with the message ready to send.");
     }
+  });
+
+  /* ---------- YouTube stats for admin.php: plays on the site and clicks through to YouTube ---------- */
+  function trackVideo(id, kind, title) {
+    if (!navigator.sendBeacon) return;
+    var known = (cfg.videos || []).filter(function (v) { return v.youtube === id; })[0];
+    var data = new FormData();
+    data.append("video", id);
+    data.append("kind", kind);
+    data.append("title", (known && known.title) || title || "");
+    data.append("page", location.pathname);
+    navigator.sendBeacon("/track.php", data);
+  }
+
+  // Clicks inside a YouTube player can't be seen directly, but the player takes focus when it's clicked.
+  // Gallery players are counted by their own play button (they load with autoplay=1).
+  var countedPlayers = [];
+  setInterval(function () {
+    var f = document.activeElement;
+    if (!f || f.tagName !== "IFRAME" || countedPlayers.indexOf(f) !== -1) return;
+    countedPlayers.push(f);
+    var m = /youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{11})/.exec(f.src);
+    if (m && !/autoplay=1/.test(f.src)) trackVideo(m[1], "play", f.title);
+  }, 500);
+
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href*="youtube.com"], a[href*="youtu.be"]');
+    if (!a) return;
+    var m = /(?:[?&]v=|youtu\.be\/)([A-Za-z0-9_-]{11})/.exec(a.href);
+    trackVideo(m ? m[1] : "channel", "link", m ? a.getAttribute("data-title") || a.textContent.trim() : "YouTube channel");
   });
 
   function escapeHtml(s) {

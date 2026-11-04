@@ -5,6 +5,8 @@ User-agent: bingbot
 Allow: /
 
 User-agent: *
+Disallow: /admin.php
+Disallow: /track.php
 Allow: /
 
 Sitemap: https://reecemusic.com/sitemap.xml
