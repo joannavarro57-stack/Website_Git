@@ -245,8 +245,13 @@
         midiLists.forEach(function (list) {
           if (!songs.length) { list.innerHTML = '<p class="muted">New songs are on the way. Check back soon.</p>'; return; }
           list.innerHTML = songs.map(function (s) {
+            var yt = safeYt(s.youtubeId);
+            // The tutorial shows as a thumbnail; the YouTube player only loads when it's played, so a long list stays fast.
             return '<article class="record">' +
-              '<div class="disc" aria-hidden="true"></div>' +
+              (yt ? '<div class="video-frame record-video" data-yt="' + yt + '" data-title="' + escapeHtml(s.title) + ' tutorial">' +
+                  '<img src="https://i.ytimg.com/vi/' + yt + '/hqdefault.jpg" alt="" loading="lazy">' +
+                  '<button class="video-play" type="button" aria-label="Play the ' + escapeHtml(s.title) + ' tutorial"><span></span></button></div>'
+                : '<div class="disc" aria-hidden="true"></div>') +
               "<h3>" + escapeHtml(s.title) + "</h3>" +
               '<span class="muted song-artist">' + escapeHtml(s.artist) + "</span>" +
               "<p>" + escapeHtml(s.description) + "</p>" +
@@ -257,6 +262,14 @@
               '<div class="btn-row"><a class="btn btn-brass" href="' + songHref(s.id) + '">Get the files</a></div>' +
             "</article>";
           }).join("");
+          list.addEventListener("click", function (e) {
+            var play = e.target.closest(".record-video .video-play");
+            if (!play) return;
+            var box = play.parentNode, id = box.getAttribute("data-yt");
+            box.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0" title="' + escapeHtml(box.getAttribute("data-title")) +
+              '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+            trackVideo(id, "play", box.getAttribute("data-title"));
+          });
         });
       })
       .catch(function () {
