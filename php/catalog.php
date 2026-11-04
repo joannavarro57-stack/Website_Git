@@ -25,6 +25,8 @@ const FORMATS = [
 ];
 
 final class NotConfigured extends RuntimeException {}
+// A problem worth showing the admin as it is, such as a file that couldn't be saved or renamed.
+final class UploadProblem extends RuntimeException {}
 
 function filesDir(): string
 {
@@ -80,10 +82,28 @@ function songsTable(PDO $pdo): void
 }
 
 // All songs in display order, as id => [title, artist, description, youtubeId, files => [format => file name]].
+// The first call in each request also brings any song whose id no longer matches its title in line with it.
 function catalog(): array
 {
+    static $synced = false;
     $pdo = db();
     songsTable($pdo);
+    $songs = loadSongs($pdo);
+    if ($synced) return $songs;
+    $synced = true;
+    $changed = false;
+    foreach ($songs as $song) {
+        try {
+            $changed = followTitle($pdo, $song, $song['title']) !== $song['id'] || $changed;
+        } catch (Throwable $e) {
+            error_log('Updating the address of "' . $song['title'] . '" failed: ' . $e->getMessage());
+        }
+    }
+    return $changed ? loadSongs($pdo) : $songs;
+}
+
+function loadSongs(PDO $pdo): array
+{
     $songs = [];
     foreach ($pdo->query('SELECT * FROM songs ORDER BY position, created_at') as $row) {
         $songs[$row['id']] = [
@@ -96,6 +116,80 @@ function catalog(): array
         ];
     }
     return $songs;
+}
+
+// "Für Elise" → "fur-elise": spell accented letters plainly before dropping everything else.
+function slugBase(string $title): string
+{
+    // Some iconv builds spell ü as "u or u", so drop those marks too.
+    $ascii = function_exists('iconv') ? (string) @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title) : $title;
+    $ascii = str_replace(['"', "'", '`', '^', '~'], '', $ascii);
+    $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($ascii)), '-');
+    return substr($base !== '' ? $base : 'song', 0, 60);
+}
+
+// A free id for this title: "fur-elise", or "fur-elise-2" when that's taken by another song.
+function slug(string $title, PDO $pdo, string $except = ''): string
+{
+    $base = slugBase($title);
+    $check = $pdo->prepare('SELECT 1 FROM songs WHERE id = ? AND id <> ?');
+    for ($id = $base, $n = 2; ; $id = $base . '-' . $n++) {
+        $check->execute([$id, $except]);
+        if (!$check->fetch()) return $id;
+    }
+}
+
+// Keeps a song's id (its web address and file names) in step with its title. Download counts move with it.
+// Returns the id the song has afterwards.
+function followTitle(PDO $pdo, array $song, string $title): string
+{
+    $id = $song['id'];
+    $base = slugBase($title);
+    if ($id === $base || preg_match('/^' . preg_quote($base, '/') . '-\d+$/', $id)) return $id;
+    $newId = slug($title, $pdo, $id);
+
+    $renamed = [];   // [from, to] paths, so a failure can put them back
+    $columns = [];
+    try {
+        $dir = filesDir();
+        foreach ($song['files'] as $format => $file) {
+            $newFile = $newId . '.' . strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            $columns[$format] = $newFile;
+            $from = $dir . '/' . basename($file);
+            if (is_file($from)) {
+                if (!rename($from, $dir . '/' . $newFile)) throw new UploadProblem("A file couldn't be renamed to match the new title, so the title wasn't changed.");
+                $renamed[] = [$from, $dir . '/' . $newFile];
+            }
+        }
+    } catch (NotConfigured $e) {
+        foreach ($song['files'] as $format => $file) $columns[$format] = $newId . '.' . strtolower(pathinfo($file, PATHINFO_EXTENSION));
+    } catch (UploadProblem $e) {
+        foreach ($renamed as [$from, $to]) @rename($to, $from);
+        throw $e;
+    }
+
+    try {
+        $pdo->beginTransaction();
+        $sets = ['id = ?'];
+        $values = [$newId];
+        foreach ($columns as $format => $file) {
+            $sets[] = "{$format}_file = ?";
+            $values[] = $file;
+        }
+        $values[] = $id;
+        $pdo->prepare('UPDATE songs SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($values);
+        $pdo->prepare('UPDATE midi_downloads SET song_id = ? WHERE song_id = ?')->execute([$newId, $id]);
+        // The old address keeps working, and so do any addresses it had before that.
+        $pdo->prepare('UPDATE song_aliases SET song_id = ? WHERE song_id = ?')->execute([$newId, $id]);
+        $pdo->prepare('INSERT INTO song_aliases (old_id, song_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE song_id = VALUES(song_id)')->execute([$id, $newId]);
+        $pdo->prepare('DELETE FROM song_aliases WHERE old_id = ?')->execute([$newId]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        foreach ($renamed as [$from, $to]) @rename($to, $from);
+        throw $e;
+    }
+    return $newId;
 }
 
 // Finds a song by its id, or by an id it had before its title changed.

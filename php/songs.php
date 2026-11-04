@@ -14,8 +14,6 @@ require __DIR__ . '/catalog.php';
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
-final class UploadProblem extends RuntimeException {}
-
 if (!$signedIn) redirect('admin.php');
 
 function bytesFromIni(string $value): int
@@ -55,80 +53,6 @@ function youtubeId(string $input): string
     if (preg_match('~^[A-Za-z0-9_-]{11}$~', $input)) return $input;
     if (preg_match('~(?:youtu\.be/|[?&]v=|/embed/|/shorts/|/live/)([A-Za-z0-9_-]{11})~', $input, $m)) return $m[1];
     throw new UploadProblem('That YouTube link wasn\'t recognised. Paste the video\'s address, e.g. https://youtu.be/abc123XYZ_0');
-}
-
-// "Für Elise" → "fur-elise": spell accented letters plainly before dropping everything else.
-function slugBase(string $title): string
-{
-    // Some iconv builds spell ü as "u or u", so drop those marks too.
-    $ascii = function_exists('iconv') ? (string) @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title) : $title;
-    $ascii = str_replace(['"', "'", '`', '^', '~'], '', $ascii);
-    $base = trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($ascii)), '-');
-    return substr($base !== '' ? $base : 'song', 0, 60);
-}
-
-// A free id for this title: "fur-elise", or "fur-elise-2" when that's taken by another song.
-function slug(string $title, PDO $pdo, string $except = ''): string
-{
-    $base = slugBase($title);
-    $check = $pdo->prepare('SELECT 1 FROM songs WHERE id = ? AND id <> ?');
-    for ($id = $base, $n = 2; ; $id = $base . '-' . $n++) {
-        $check->execute([$id, $except]);
-        if (!$check->fetch()) return $id;
-    }
-}
-
-// Keeps a song's id (its web address and file names) in step with its title. Download counts move with it.
-// Returns the id the song has afterwards.
-function followTitle(PDO $pdo, array $song, string $title): string
-{
-    $id = $song['id'];
-    $base = slugBase($title);
-    if ($id === $base || preg_match('/^' . preg_quote($base, '/') . '-\d+$/', $id)) return $id;
-    $newId = slug($title, $pdo, $id);
-
-    $renamed = [];   // [from, to] paths, so a failure can put them back
-    $columns = [];
-    try {
-        $dir = filesDir();
-        foreach ($song['files'] as $format => $file) {
-            $newFile = $newId . '.' . strtolower(pathinfo($file, PATHINFO_EXTENSION));
-            $columns[$format] = $newFile;
-            $from = $dir . '/' . basename($file);
-            if (is_file($from)) {
-                if (!rename($from, $dir . '/' . $newFile)) throw new UploadProblem("A file couldn't be renamed to match the new title, so the title wasn't changed.");
-                $renamed[] = [$from, $dir . '/' . $newFile];
-            }
-        }
-    } catch (NotConfigured $e) {
-        foreach ($song['files'] as $format => $file) $columns[$format] = $newId . '.' . strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    } catch (UploadProblem $e) {
-        foreach ($renamed as [$from, $to]) @rename($to, $from);
-        throw $e;
-    }
-
-    try {
-        $pdo->beginTransaction();
-        $sets = ['id = ?'];
-        $values = [$newId];
-        foreach ($columns as $format => $file) {
-            $sets[] = "{$format}_file = ?";
-            $values[] = $file;
-        }
-        $values[] = $id;
-        $pdo->prepare('UPDATE songs SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($values);
-        $pdo->prepare('UPDATE midi_downloads SET song_id = ? WHERE song_id = ?')->execute([$newId, $id]);
-        // The old address keeps working, and so do any addresses it had before that.
-        $pdo->prepare('UPDATE song_aliases SET song_id = ? WHERE song_id = ?')->execute([$newId, $id]);
-        $pdo->prepare('INSERT INTO song_aliases (old_id, song_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE song_id = VALUES(song_id)')->execute([$id, $newId]);
-        $pdo->prepare('DELETE FROM song_aliases WHERE old_id = ?')->execute([$newId]);
-        $pdo->commit();
-    } catch (Throwable $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
-        foreach ($renamed as [$from, $to]) @rename($to, $from);
-        throw $e;
-    }
-    return $newId;
 }
 
 // Checks the start of the file really is that kind of file, whatever its name says.
