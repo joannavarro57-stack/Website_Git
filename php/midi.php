@@ -23,7 +23,7 @@ function page(int $status, string $message): void
     header('Content-Type: text/html; charset=UTF-8');
     header('Cache-Control: no-store');
     echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        . '<title>Download | Reece Music</title><link rel="stylesheet" href="/css/reece.css">'
+        . '<title>Download | Reece Music</title><link rel="stylesheet" href="/css/reece.css"><script src="/js/globe.js?v=2026-11-globe-everywhere" defer></script>'
         . '<main class="section"><div class="wrap"><h1 style="font-size:2.4rem;margin-bottom:16px">Download unavailable</h1>'
         . '<p class="lede">' . $message . '</p><p><a class="btn btn-brass" href="/pages/learn.html">Back to the songs</a></p></div></main>';
     exit;

@@ -544,7 +544,7 @@ p { margin: 0 0 1em; max-width: 62ch; }
 @keyframes player-eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) { .player-bars i { animation: none; transform: scaleY(.6); } }
 
-/* ---------- floating globe: a little Earth with orbiting satellites in the corner (drawn by site.js) ---------- */
+/* ---------- floating globe: a little Earth with orbiting satellites in the corner (drawn by js/globe.js) ---------- */
 /* No frame and no controls: it hangs in the air over the page, and clicks pass straight through it. */
 .page-player {
   position: fixed; right: 14px; bottom: 10px; z-index: 40; width: 300px; pointer-events: none;

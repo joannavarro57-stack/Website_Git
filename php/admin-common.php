@@ -182,6 +182,7 @@ function pageStart(string $title, string $active, bool $signedIn): void
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/reece.css?v=2026-11-saber-once">
   <link rel="stylesheet" href="../css/admin.css?v=2026-11-users">
+  <script src="../js/globe.js?v=2026-11-globe-everywhere" defer></script>
 </head>
 <body>
   <header class="site-header">
