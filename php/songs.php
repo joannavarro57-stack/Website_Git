@@ -118,6 +118,10 @@ function followTitle(PDO $pdo, array $song, string $title): string
         $values[] = $id;
         $pdo->prepare('UPDATE songs SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($values);
         $pdo->prepare('UPDATE midi_downloads SET song_id = ? WHERE song_id = ?')->execute([$newId, $id]);
+        // The old address keeps working, and so do any addresses it had before that.
+        $pdo->prepare('UPDATE song_aliases SET song_id = ? WHERE song_id = ?')->execute([$newId, $id]);
+        $pdo->prepare('INSERT INTO song_aliases (old_id, song_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE song_id = VALUES(song_id)')->execute([$id, $newId]);
+        $pdo->prepare('DELETE FROM song_aliases WHERE old_id = ?')->execute([$newId]);
         $pdo->commit();
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
@@ -283,6 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             $pdo->prepare('DELETE FROM songs WHERE id = ?')->execute([$id]);
+            $pdo->prepare('DELETE FROM song_aliases WHERE song_id = ?')->execute([$id]);
             flash("Deleted \"{$song['title']}\" and its files. Its download counts stay on the Stats page.");
         }
     } catch (UploadProblem $e) {
@@ -302,6 +307,15 @@ $flash = takeFlash();
 $songs = [];
 $loadError = '';
 try {
+    // Songs renamed before ids followed titles catch up here, so every address matches its title.
+    $pdo = db();
+    foreach (catalog() as $song) {
+        try {
+            followTitle($pdo, $song, $song['title']);
+        } catch (Throwable $e) {
+            error_log('Updating the address of "' . $song['title'] . '" failed: ' . $e->getMessage());
+        }
+    }
     $songs = catalog();
 } catch (Throwable $e) {
     error_log('Songs admin failed: ' . $e->getMessage());

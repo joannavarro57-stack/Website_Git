@@ -407,6 +407,20 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .tiers li.is-featured strong { color: var(--accent); }
 .btn:disabled { opacity: .6; cursor: progress; }
 
+/* ---------- donating: the thank-you on return, and the payment simulation ---------- */
+.donate-thanks { margin-top: 28px; max-width: 62ch; padding: 18px 22px; border: 1px solid var(--accent-deep); border-left: 3px solid var(--accent); border-radius: 10px; background: var(--surface); }
+.donate-thanks strong { font-family: var(--display); font-weight: 400; font-size: 1.3rem; color: var(--accent); }
+.donate-thanks p { margin: 6px 0 0; color: var(--mist); }
+.pay-demo { max-width: min(92vw, 460px); }
+.pay-demo .lightbox-inner { position: relative; border-radius: 14px; }
+.pay-demo h3 { font-size: 1.6rem; margin-bottom: 8px; }
+.pay-flag { display: inline-block; margin: 0 0 14px; padding: 3px 12px; border-radius: 999px; border: 1px dashed var(--accent-deep); color: var(--accent); font-size: .8rem; letter-spacing: .04em; }
+.pay-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0; }
+.pay-amounts button { padding: 12px 0; border-radius: 10px; border: 1px solid rgba(207, 216, 220, .35); background: transparent; color: var(--mist); font: 500 1.05rem var(--body); cursor: pointer; }
+.pay-amounts button:hover { border-color: var(--accent); }
+.pay-amounts button[aria-checked="true"] { border-color: var(--accent); background: rgba(118, 219, 227, .12); color: var(--accent); }
+.pay-status { min-height: 1.6em; margin: 14px 0 0; font-size: .92rem; }
+
 /* ---------- artwork protection (light deterrent; the watermark is in the files) ---------- */
 .art-frame img, .lightbox img {
   -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;

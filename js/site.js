@@ -232,10 +232,11 @@
     return (s.formats || []).filter(function (f) { return DOWNLOADS[f]; });
   };
   var paypal = /^https:\/\/(www\.)?(paypal\.com|paypal\.me)\//.test(cfg.paypal || "") ? cfg.paypal : "";
-  var donateBtn = function (cls) {
-    // Until a PayPal link is set in config.js this is an inert placeholder, so the layout can be previewed.
+  // songId and format say which file the donor gets afterwards. Until a PayPal link is set in config.js,
+  // the button opens the payment simulation below instead, so the whole flow can be tried.
+  var donateBtn = function (cls, songId, format) {
     return paypal ? '<a class="btn ' + cls + '" href="' + escapeHtml(paypal) + '" target="_blank" rel="noopener">Donate via PayPal</a>'
-      : '<span class="btn ' + cls + '" aria-disabled="true" title="Donations open soon">Donate via PayPal</span>';
+      : '<button class="btn ' + cls + '" type="button" data-donate-demo data-song="' + escapeHtml(songId || "") + '" data-format="' + escapeHtml(format || "") + '">Donate via PayPal</button>';
   };
 
   // Any static [data-donate] link takes the PayPal address from config.js, and stays hidden until one is set.
@@ -287,7 +288,8 @@
 
   var songRoot = document.querySelector("[data-song-page]");
   if (songRoot) {
-    var songId = new URLSearchParams(location.search).get("id");
+    var songParams = new URLSearchParams(location.search);
+    var songId = songParams.get("id");
     var notFound = function () {
       songRoot.innerHTML = '<section class="page-hero" style="border:0;min-height:50vh"><div class="wrap"><h1>Song not found</h1>' +
         '<p class="lede">That song isn\'t on the list. Browse them all instead.</p><p><a class="btn btn-brass" href="learn.html">See all songs</a></p></div></section>';
@@ -296,6 +298,9 @@
     else fetch("/php/midi.php?action=songs&id=" + encodeURIComponent(songId))
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (s) {
+        // A link from before the song was renamed shows its current address instead.
+        // The thank-you details from a donation are dropped too, so a refresh doesn't download the file again.
+        if ((s.id !== songId || songParams.has("donated")) && history.replaceState) history.replaceState(null, "", "?id=" + encodeURIComponent(s.id) + location.hash);
         document.title = s.title + " by " + s.artist + " | Play It Yourself | Reece Music";
         var yt = safeYt(s.youtubeId);
         var video = yt
@@ -307,9 +312,9 @@
           return "<li" + (i === 0 ? ' class="is-featured"' : "") + "><div><strong>" + d.title + '</strong><span class="muted">' + d.note + "</span></div>" +
             '<span class="tier-side"><span class="tier-price">Free</span><span class="tier-or">or</span></span>' +
             '<a class="btn btn-ghost" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) +
-              "&amp;format=" + f + '">' + d.button + "</a>" + donateBtn("btn-ghost") + "</li>";
+              "&amp;format=" + f + '">' + d.button + "</a>" + donateBtn("btn-ghost", s.id, f) + "</li>";
         }).join("") || '<li><div><strong>Downloads coming soon</strong><span class="muted">The MIDI and sheet music for this song are on the way</span></div></li>' +
-          '<li><div><strong>Support Reece</strong><span class="muted">A donation keeps new songs coming</span></div><div class="btn-row">' + donateBtn("btn-ghost") + "</div></li>";
+          '<li><div><strong>Support Reece</strong><span class="muted">A donation keeps new songs coming</span></div><div class="btn-row">' + donateBtn("btn-ghost", s.id) + "</div></li>";
         songRoot.innerHTML =
           '<section class="page-hero"><div class="wrap">' +
             '<a class="text-link" href="learn.html">All songs</a>' +
@@ -319,9 +324,82 @@
           '<section class="section"><div class="wrap song-layout">' +
             '<div class="song-video">' + video + "</div>" +
             '<div><ul class="tiers">' + downloads + "</ul></div></div></section>";
+        thankDonor(s);
       })
       .catch(notFound);
   }
+
+  // Back from a donation (PayPal's return address, or the simulation below): thank them and start the file
+  // they donated for, with a link in case the browser blocks the automatic download.
+  function thankDonor(s) {
+    if (!songParams.has("donated")) return;
+    var format = songParams.get("donated");
+    var file = DOWNLOADS[format] && songFormats(s).indexOf(format) !== -1 ? DOWNLOADS[format] : null;
+    var href = file && "/php/midi.php?action=download&id=" + encodeURIComponent(s.id) + "&format=" + format;
+    var amount = (songParams.get("amount") || "").replace(/[^0-9.]/g, "");
+    var box = document.createElement("div");
+    box.className = "donate-thanks";
+    box.setAttribute("role", "status");
+    box.innerHTML = "<strong>Thank you" + (amount ? " for your $" + escapeHtml(amount) + " donation" : " for your donation") + "!</strong>" +
+      (file ? "<p>Your " + escapeHtml(file.title) + ' download has started. If it hasn&rsquo;t, <a href="' + href + '">download it here</a>.</p>'
+        : "<p>It keeps new songs and tutorials coming.</p>");
+    songRoot.querySelector(".page-hero .wrap").appendChild(box);
+    if (href) {
+      var a = document.createElement("a");
+      a.href = href; a.hidden = true;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  }
+
+  /* ---------- donation simulation (until a PayPal link is set in config.js) ---------- */
+  // Stands in for PayPal's checkout so the flow can be tried end to end: pick an amount, "pay", then come back
+  // to the song page the way PayPal's return address will (?donated=<format>), where the file downloads.
+  var payDemo = null;
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-donate-demo]");
+    if (!b) return;
+    if (!payDemo) {
+      payDemo = document.createElement("dialog");
+      payDemo.className = "lightbox pay-demo";
+      payDemo.setAttribute("aria-label", "Donation (simulation)");
+      document.body.appendChild(payDemo);
+      payDemo.addEventListener("click", function (ev) {
+        if (ev.target === payDemo || ev.target.closest("[data-close]")) { payDemo.close(); return; }
+        var pick = ev.target.closest("[data-amount]");
+        if (pick) {
+          payDemo.querySelectorAll("[data-amount]").forEach(function (x) { x.setAttribute("aria-checked", String(x === pick)); });
+          payDemo.querySelector("[data-pay]").textContent = "Donate $" + pick.getAttribute("data-amount");
+          return;
+        }
+        var pay = ev.target.closest("[data-pay]");
+        if (!pay) return;
+        var amount = payDemo.querySelector('[aria-checked="true"]').getAttribute("data-amount");
+        pay.disabled = true;
+        payDemo.querySelector(".pay-status").textContent = "Processing payment…";
+        setTimeout(function () {
+          var format = payDemo.getAttribute("data-format");
+          location.href = "song.html?id=" + encodeURIComponent(payDemo.getAttribute("data-song")) +
+            (format ? "&donated=" + encodeURIComponent(format) : "&donated=") + "&amount=" + amount;
+        }, 1400);
+      });
+    }
+    var format = b.getAttribute("data-format");
+    payDemo.setAttribute("data-song", b.getAttribute("data-song"));
+    payDemo.setAttribute("data-format", format);
+    payDemo.innerHTML = '<div class="lightbox-inner">' +
+      '<button class="lightbox-close" type="button" aria-label="Close" data-close>&times;</button>' +
+      '<p class="pay-flag">Simulation · no money is taken</p>' +
+      "<h3>Support Reece</h3>" +
+      '<p class="muted">' + (DOWNLOADS[format] ? "After donating, your " + escapeHtml(DOWNLOADS[format].title) + " downloads straight away." : "Every donation keeps new songs coming.") +
+        " This window stands in for PayPal's checkout until it's connected.</p>" +
+      '<div class="pay-amounts" role="radiogroup" aria-label="Amount">' +
+        [3, 5, 10, 20].map(function (a) { return '<button type="button" role="radio" aria-checked="' + (a === 5) + '" data-amount="' + a + '">$' + a + "</button>"; }).join("") +
+      "</div>" +
+      '<div class="btn-row"><button class="btn btn-brass" type="button" data-pay>Donate $5</button><button class="btn btn-ghost" type="button" data-close>Cancel</button></div>' +
+      '<p class="pay-status muted" aria-live="polite"></p>' +
+    "</div>";
+    payDemo.showModal();
+  });
 
   /* ---------- discourage saving artwork (the watermark is baked into the files) ---------- */
   document.addEventListener("contextmenu", function (e) {

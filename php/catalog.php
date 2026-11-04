@@ -54,6 +54,14 @@ function songsTable(PDO $pdo): void
         . 'PRIMARY KEY (id)'
         . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
+    // A song's old ids after its title changed, so links shared before the change still open it.
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS song_aliases ('
+        . 'old_id VARCHAR(100) NOT NULL,'
+        . 'song_id VARCHAR(100) NOT NULL,'
+        . 'PRIMARY KEY (old_id)'
+        . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
     if (!$exists) {
         $seed = json_decode((string) @file_get_contents(dirname(__DIR__) . '/data/midi-songs.json'), true) ?: [];
         $insert = $pdo->prepare(
@@ -90,9 +98,15 @@ function catalog(): array
     return $songs;
 }
 
+// Finds a song by its id, or by an id it had before its title changed.
 function findSong(mixed $id): ?array
 {
-    return catalog()[(string) $id] ?? null;
+    $songs = catalog();
+    $id = (string) $id;
+    if (isset($songs[$id])) return $songs[$id];
+    $alias = db()->prepare('SELECT song_id FROM song_aliases WHERE old_id = ?');
+    $alias->execute([$id]);
+    return $songs[(string) $alias->fetchColumn()] ?? null;
 }
 
 // Where a song's file for one format is, or null when it isn't on the server (yet).
