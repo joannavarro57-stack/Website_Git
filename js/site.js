@@ -228,7 +228,7 @@
 
   var midiLists = document.querySelectorAll("[data-midi-list]");
   if (midiLists.length) {
-    fetch("/midi.php?action=songs", { headers: { Accept: "application/json" } })
+    fetch("/php/midi.php?action=songs", { headers: { Accept: "application/json" } })
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (data) {
         var songs = (data && data.songs) || [];
@@ -259,7 +259,7 @@
         '<p class="lede">That song isn\'t on the list. Browse them all instead.</p><p><a class="btn btn-brass" href="learn.html">See all songs</a></p></div></section>';
     };
     if (!songId) notFound();
-    else fetch("/midi.php?action=songs&id=" + encodeURIComponent(songId))
+    else fetch("/php/midi.php?action=songs&id=" + encodeURIComponent(songId))
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (s) {
         document.title = s.title + " by " + s.artist + " | Play It Yourself | Reece Music";
@@ -277,7 +277,7 @@
             '<div class="song-video">' + video + "</div>" +
             '<div><ul class="tiers">' +
               '<li class="is-featured"><div><strong>MIDI file</strong><span class="muted">The full arrangement, for your own keyboard</span></div><span class="tier-price">Free</span>' +
-                '<a class="btn btn-brass" href="/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) + '">Download MIDI</a></li>' +
+                '<a class="btn btn-brass" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) + '">Download MIDI</a></li>' +
               (yt ? '<li><div><strong>Video tutorial</strong><span class="muted">Reece plays it through, step by step</span></div>' +
                 '<a class="btn btn-ghost" href="https://www.youtube.com/watch?v=' + yt + '" data-title="' + escapeHtml(s.title) + ' tutorial" target="_blank" rel="noopener">Watch on YouTube</a></li>' : "") +
               '<li><div><strong>Support Reece</strong><span class="muted">If the file helps, a donation keeps new ones coming</span></div>' +
@@ -385,7 +385,7 @@
     data.append("kind", kind);
     data.append("title", (known && known.title) || title || "");
     data.append("page", location.pathname);
-    navigator.sendBeacon("/track.php", data);
+    navigator.sendBeacon("/php/track.php", data);
   }
 
   // Clicks inside a YouTube player can't be seen directly, but the player takes focus when it's clicked.

@@ -47,14 +47,15 @@ jobs:
 
           # Files and folders to publish. Anything listed here that no longer exists is skipped,
           # so deleting a page can't break the deploy.
-          wanted="index.html sight-and-sound.html gigs.html shop.html about.html
-            artwork.html events.html recordings.html services.html contact.html
-            learn.html song.html 404.html
-            contact.php midi.php track.php admin.php db.php favicon.png robots.txt sitemap.xml css js images data"
+          wanted="index.html pages php favicon.png robots.txt sitemap.xml css js images data"
           paths=()
           for p in $wanted; do
             if git cat-file -e "HEAD:$p" 2>/dev/null; then paths+=("$p"); else echo "::warning::Skipping $p (not in the repository)"; fi
           done
+
+          # Pages now live in pages/ and PHP in php/. Remove the copies left at the top level from before the move
+          # (never config.php, which stays at the top level).
+          OLD_FILES="sight-and-sound.html gigs.html shop.html about.html artwork.html events.html recordings.html services.html contact.html learn.html song.html 404.html contact.php midi.php track.php admin.php db.php"
 
           git archive --format=tar HEAD "${paths[@]}" \
             | gzip \
@@ -64,4 +65,4 @@ jobs:
                 -o BatchMode=yes \
                 -o StrictHostKeyChecking=yes \
                 "$CPANEL_USER@$CPANEL_HOST" \
-                'mkdir -p /home/reecemus/public_html && tar -xzf - -C /home/reecemus/public_html'
+                "mkdir -p /home/reecemus/public_html && tar -xzf - -C /home/reecemus/public_html && cd /home/reecemus/public_html && rm -f $OLD_FILES"

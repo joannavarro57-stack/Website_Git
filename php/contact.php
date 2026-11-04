@@ -122,7 +122,7 @@ if ($mailingList) {
     }
 
     $source = preg_replace('/[^a-zA-Z0-9_-]/', '', $source) ?: 'homepage';
-    $configPath = __DIR__ . '/config.php';
+    $configPath = dirname(__DIR__) . '/config.php';
 
     if (!is_file($configPath)) {
         http_response_code(500);
@@ -208,13 +208,13 @@ if ($name === '' || $email === '' || $message === '' || !$human || !filter_var($
 $name = str_replace(["\r", "\n"], ' ', $name);
 $subject = 'New website enquiry from ' . $name;
 $body = "Name: {$name}\nEmail: {$email}\n\nMessage:\n{$message}\n";
-if (!is_file(__DIR__ . '/config.php')) {
+if (!is_file(dirname(__DIR__) . '/config.php')) {
     http_response_code(500);
     echo json_encode(['error' => 'Email delivery is not configured yet.']);
     exit;
 }
 
-$config = require __DIR__ . '/config.php';
+$config = require dirname(__DIR__) . '/config.php';
 $smtp = $config['smtp'] ?? [];
 $htmlBody = nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));
 

@@ -32,7 +32,7 @@ function h(?string $value): string
 // Returns the admin password, or '' with $problem saying why the page is switched off.
 function adminPassword(?string &$problem): string
 {
-    $path = __DIR__ . '/config.php';
+    $path = dirname(__DIR__) . '/config.php';
     // Hosts can cache PHP files for a while; make sure a just-saved config.php is read fresh.
     if (function_exists('opcache_invalidate')) @opcache_invalidate($path, true);
     try {
@@ -41,7 +41,7 @@ function adminPassword(?string &$problem): string
         $problem = is_file($path)
             // Only the line number: the parser's message can quote the file's passwords.
             ? 'config.php has a mistake on or just before line ' . $error->getLine() . ' (often a missing comma).'
-            : 'There is no config.php next to admin.php (in public_html).';
+            : 'There is no config.php in public_html.';
         return '';
     }
     $password = (string) ($admin['password'] ?? '');
@@ -142,7 +142,7 @@ if ($signedIn) {
 
         // Every song in the catalog gets a row, downloaded or not; songs since removed from it still show by id.
         $songs = [];
-        foreach (json_decode((string) @file_get_contents(__DIR__ . '/data/midi-songs.json'), true) ?: [] as $song) {
+        foreach (json_decode((string) @file_get_contents(dirname(__DIR__) . '/data/midi-songs.json'), true) ?: [] as $song) {
             $songs[$song['id']] = ['title' => $song['title'], 'artist' => $song['artist'], 'total' => 0, 'recent' => 0, 'last_download' => null];
         }
         foreach ($data['downloads'] as $id => $row) {
@@ -157,10 +157,13 @@ if ($signedIn) {
     }
 }
 
-$pageNames = [
-    '/' => 'Home', '/index.html' => 'Home', '/sight-and-sound.html' => 'Sight & Sound', '/learn.html' => 'Play it yourself',
-    '/song.html' => 'Song pages', '/gigs.html' => 'Gigs', '/shop.html' => 'Shop', '/about.html' => 'About'
-];
+$pageNames = ['/' => 'Home', '/index.html' => 'Home'];
+// Pages live in /pages/; clicks recorded before the move used the old top-level addresses.
+foreach (['sight-and-sound' => 'Sight & Sound', 'learn' => 'Play it yourself', 'song' => 'Song pages',
+          'gigs' => 'Gigs', 'shop' => 'Shop', 'about' => 'About'] as $file => $name) {
+    $pageNames["/pages/$file.html"] = $name;
+    $pageNames["/$file.html"] = $name;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -169,11 +172,11 @@ $pageNames = [
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Admin | Reece Music</title>
-  <link rel="icon" type="image/png" href="images/reece-favicon.png">
+  <link rel="icon" type="image/png" href="../images/reece-favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/reece.css?v=2026-11-admin-link">
+  <link rel="stylesheet" href="../css/reece.css?v=2026-11-admin-link">
   <style>
     .admin { padding: clamp(40px, 6vw, 72px) 0 96px; }
     .admin-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 40px; }
@@ -203,7 +206,7 @@ $pageNames = [
 <body>
   <header class="site-header">
     <div class="wrap">
-      <a class="wordmark" href="index.html">Reece <span>Music</span></a>
+      <a class="wordmark" href="../index.html">Reece <span>Music</span></a>
       <?php if ($signedIn): ?><a class="text-link" href="admin.php?logout=1">Sign out</a><?php endif; ?>
     </div>
   </header>
@@ -283,7 +286,7 @@ $pageNames = [
 <?php endif; ?>
 <?php foreach ($data['songs'] as $id => $row): ?>
             <tr>
-              <td><a href="song.html?id=<?= h(rawurlencode((string) $id)) ?>" target="_blank" rel="noopener"><?= h($row['title']) ?></a></td>
+              <td><a href="../pages/song.html?id=<?= h(rawurlencode((string) $id)) ?>" target="_blank" rel="noopener"><?= h($row['title']) ?></a></td>
               <td class="muted"><?= h($row['artist']) ?></td>
               <td class="num"><?= (int) $row['recent'] ?></td>
               <td class="num"><strong><?= (int) $row['total'] ?></strong></td>
@@ -322,8 +325,16 @@ $pageNames = [
         <table>
           <thead><tr><th>Page</th><th class="num">Clicks</th></tr></thead>
           <tbody>
-<?php foreach ($data['pages'] as $row): ?>
-            <tr><td><?= h($pageNames[$row['page']] ?? $row['page']) ?></td><td class="num"><?= (int) $row['total'] ?></td></tr>
+<?php
+$byName = [];
+foreach ($data['pages'] as $row) {
+    $name = $pageNames[$row['page']] ?? $row['page'];
+    $byName[$name] = ($byName[$name] ?? 0) + (int) $row['total'];
+}
+arsort($byName);
+?>
+<?php foreach ($byName as $name => $total): ?>
+            <tr><td><?= h((string) $name) ?></td><td class="num"><?= $total ?></td></tr>
 <?php endforeach; ?>
           </tbody>
         </table>

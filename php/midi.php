@@ -25,14 +25,14 @@ function page(int $status, string $message): void
     echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         . '<title>Download | Reece Music</title><link rel="stylesheet" href="/css/reece.css">'
         . '<main class="section"><div class="wrap"><h1 style="font-size:2.4rem;margin-bottom:16px">Download unavailable</h1>'
-        . '<p class="lede">' . $message . '</p><p><a class="btn btn-brass" href="/learn.html">Back to the songs</a></p></div></main>';
+        . '<p class="lede">' . $message . '</p><p><a class="btn btn-brass" href="/pages/learn.html">Back to the songs</a></p></div></main>';
     exit;
 }
 
 function catalog(): array
 {
     static $songs = null;
-    $songs ??= json_decode((string) file_get_contents(__DIR__ . '/data/midi-songs.json'), true) ?: [];
+    $songs ??= json_decode((string) file_get_contents(dirname(__DIR__) . '/data/midi-songs.json'), true) ?: [];
     return $songs;
 }
 
@@ -60,7 +60,7 @@ function midiConfig(string $key): string
 {
     static $midi = null;
     if ($midi === null) {
-        $path = __DIR__ . '/config.php';
+        $path = dirname(__DIR__) . '/config.php';
         $midi = is_file($path) ? ((require $path)['midi'] ?? []) : [];
     }
     $value = (string) ($midi[$key] ?? '');

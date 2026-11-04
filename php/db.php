@@ -14,7 +14,7 @@ function siteConfig(): array
 {
     static $config = null;
     if ($config === null) {
-        $path = __DIR__ . '/config.php';
+        $path = dirname(__DIR__) . '/config.php';
         if (!is_file($path)) throw new RuntimeException('config.php is missing.');
         $config = require $path;
     }
