@@ -29,17 +29,30 @@ function h(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
-function adminPassword(): string
+// Returns the admin password, or '' with $problem saying why the page is switched off.
+function adminPassword(?string &$problem): string
 {
+    $path = __DIR__ . '/config.php';
+    // Hosts can cache PHP files for a while; make sure a just-saved config.php is read fresh.
+    if (function_exists('opcache_invalidate')) @opcache_invalidate($path, true);
     try {
-        $password = (string) (siteConfig()['admin']['password'] ?? '');
+        $admin = siteConfig()['admin'] ?? null;
     } catch (Throwable $error) {
+        $problem = is_file($path)
+            // Only the line number: the parser's message can quote the file's passwords.
+            ? 'config.php has a mistake on or just before line ' . $error->getLine() . ' (often a missing comma).'
+            : 'There is no config.php next to admin.php (in public_html).';
         return '';
     }
-    return $password === '' || str_contains($password, 'replace-with-') ? '' : $password;
+    $password = (string) ($admin['password'] ?? '');
+    if (!is_array($admin)) $problem = 'config.php in public_html has no \'admin\' section.';
+    elseif ($password === '' || str_contains($password, 'replace-with-')) $problem = 'The \'admin\' password in config.php is empty or still the placeholder.';
+    else return $password;
+    return '';
 }
 
-$password = adminPassword();
+$problem = null;
+$password = adminPassword($problem);
 $error = '';
 
 if (isset($_GET['logout'])) {
@@ -156,7 +169,7 @@ $pageNames = [
     <div class="wrap">
 <?php if ($password === ''): ?>
       <h1>Admin</h1>
-      <p class="notice" style="margin-top:32px">The admin page is switched off. To switch it on, add a password to <code>config.php</code> on the server:<br><code>'admin' =&gt; ['password' =&gt; 'your-password-here']</code></p>
+      <p class="notice" style="margin-top:32px">The admin page is switched off. <?= h($problem) ?><br>To switch it on, add a password to <code>public_html/config.php</code> on the server:<br><code>'admin' =&gt; ['password' =&gt; 'your-password-here'],</code></p>
 <?php elseif (!$signedIn): ?>
       <form class="login" method="post" action="admin.php">
         <p class="kicker">Reece Music</p>
