@@ -1,7 +1,8 @@
 <?php
 
 // Admin: manage the YouTube videos in the Sight & Sound galleries.
-//   GET  videos.php                       → videos gallery by gallery, with add/edit forms
+//   GET  videos.php                       → a table of videos per gallery, with the add form
+//   GET  videos.php?edit=…#video-…        → that video's row as an edit form
 //   POST videos.php  action=add           → new video (youtube, gallery, title, note)
 //   POST videos.php  action=update&id=…   → edit its link, gallery, title or note
 //   POST videos.php  action=move&id=…&dir=up|down, action=delete&id=…
@@ -83,13 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'update') {
-            $back = 'videos.php?open=' . $id . '#video-' . $id;
+            $back = 'videos.php?edit=' . $id . '#video-' . $id;
             $details = videoDetails();
             // A video moved to another gallery joins the end of it.
             $position = $details['gallery'] === $video['gallery'] ? null : nextPosition($pdo, $details['gallery']);
             $pdo->prepare('UPDATE gallery_videos SET gallery = ?, youtube_id = ?, title = ?, note = ?' . ($position ? ', position = ' . $position : '') . ' WHERE id = ?')
                 ->execute([$details['gallery'], $details['youtube_id'], $details['title'], $details['note'], $id]);
             flash('Saved ' . videoName($details) . ($position ? ', now at the end of ' . GALLERIES[$details['gallery']] : '') . '.');
+            $back = 'videos.php#video-' . $id;
         }
 
         if ($action === 'move') {
@@ -129,7 +131,7 @@ try {
     error_log('Videos admin failed: ' . $e->getMessage());
     $loadError = 'The database is unavailable. Check the database settings in config.php.';
 }
-$open = (int) ($_GET['open'] ?? 0);
+$editId = (int) ($_GET['edit'] ?? 0);
 
 function galleryOptions(string $selected): void
 {
@@ -173,49 +175,66 @@ pageStart('YouTube', 'videos.php', true);
         </form>
       </details>
 
-<?php foreach ($byGallery as $gallery => $videos): ?>
+<?php foreach ($byGallery as $gallery => $videos): $last = count($videos) - 1; ?>
       <h2 id="gallery-<?= h($gallery) ?>"><?= h(GALLERIES[$gallery]) ?><small><?= count($videos) ?> <?= count($videos) === 1 ? 'video' : 'videos' ?>, in the order visitors see them</small></h2>
+      <div class="table-scroll">
+        <table class="video-table">
+          <thead><tr><th class="num">#</th><th>Video</th><th>Note</th><th>YouTube</th><th class="num"><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
 <?php if (!$videos): ?>
-      <p class="muted">No videos in this gallery yet.<?= $gallery === 'original' ? ' Until there are, the site shows a "coming soon" note here.' : ' It stays hidden on the site until one is added.' ?></p>
+            <tr class="empty-row"><td colspan="5">No videos in this gallery yet.<?= $gallery === 'original' ? ' Until there are, the site shows a "coming soon" note here.' : ' It stays hidden on the site until one is added.' ?></td></tr>
 <?php endif; ?>
-<?php $last = count($videos) - 1; $n = 0; ?>
-<?php foreach ($videos as $id => $video): ?>
-      <details class="card song-card video-card" id="video-<?= $id ?>"<?= $open === $id ? ' open' : '' ?>>
-        <summary>
-          <img class="video-thumb" src="https://i.ytimg.com/vi/<?= h($video['youtube']) ?>/mqdefault.jpg" alt="" loading="lazy" width="120" height="68">
-          <h3><?= $video['title'] !== '' ? h($video['title']) : '<span class="muted">Untitled</span>' ?><small><?= $n + 1 ?> of <?= $last + 1 ?></small></h3>
-        </summary>
-
-        <form method="post" action="videos.php">
-          <?= csrfField() ?>
-          <input type="hidden" name="action" value="update">
-          <input type="hidden" name="id" value="<?= $id ?>">
-          <div class="field-grid">
-            <label class="field field-wide"><span>YouTube link</span><input type="text" name="youtube" required value="<?= h('https://youtu.be/' . $video['youtube']) ?>"></label>
-            <label class="field"><span>Gallery</span><select name="gallery" required>
+<?php $n = 0; foreach ($videos as $id => $video): $form = 'edit-' . $id; ?>
+            <tr id="video-<?= $id ?>"<?= $id === $editId ? ' class="is-editing"' : '' ?>>
+              <td class="num muted"><?= $n + 1 ?></td>
+<?php if ($id === $editId): ?>
+              <td>
+                <form id="<?= $form ?>" method="post" action="videos.php"><?= csrfField() ?><input type="hidden" name="action" value="update"><input type="hidden" name="id" value="<?= $id ?>"></form>
+                <label class="visually-hidden" for="<?= $form ?>-title">Title</label>
+                <input id="<?= $form ?>-title" form="<?= $form ?>" type="text" name="title" maxlength="200" value="<?= h($video['title']) ?>" placeholder="Title" autofocus>
+              </td>
+              <td><label class="visually-hidden" for="<?= $form ?>-note">Note</label><input id="<?= $form ?>-note" form="<?= $form ?>" type="text" name="note" maxlength="300" value="<?= h($video['note']) ?>" placeholder="Note (optional)"></td>
+              <td class="video-edit-link">
+                <label class="visually-hidden" for="<?= $form ?>-youtube">YouTube link</label>
+                <input id="<?= $form ?>-youtube" form="<?= $form ?>" type="text" name="youtube" required value="<?= h('https://youtu.be/' . $video['youtube']) ?>">
+                <label class="visually-hidden" for="<?= $form ?>-gallery">Gallery</label>
+                <select id="<?= $form ?>-gallery" form="<?= $form ?>" name="gallery" required>
 <?php galleryOptions($video['gallery']); ?>
-            </select></label>
-            <label class="field"><span>Title (optional)</span><input type="text" name="title" maxlength="200" value="<?= h($video['title']) ?>"></label>
-            <label class="field field-wide"><span>Note under the title (optional)</span><input type="text" name="note" maxlength="300" value="<?= h($video['note']) ?>"></label>
-          </div>
-          <div class="card-actions">
-            <button class="btn btn-brass" type="submit">Save changes</button>
-            <a class="text-link" href="https://www.youtube.com/watch?v=<?= h($video['youtube']) ?>" target="_blank" rel="noopener">Watch on YouTube</a>
-          </div>
-        </form>
-
-        <div class="card-actions">
-<?php foreach (['up' => 'Move up', 'down' => 'Move down'] as $way => $text): if (($way === 'up' && $n === 0) || ($way === 'down' && $n === $last)) continue; ?>
-          <form method="post" action="videos.php"><?= csrfField() ?><input type="hidden" name="action" value="move"><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="dir" value="<?= $way ?>"><button class="btn btn-ghost btn-small" type="submit"><?= $text ?></button></form>
+                </select>
+              </td>
+              <td class="num">
+                <div class="row-actions">
+                  <button class="btn btn-brass btn-small" form="<?= $form ?>" type="submit">Save</button>
+                  <a class="btn btn-ghost btn-small" href="videos.php#video-<?= $id ?>">Cancel</a>
+                </div>
+              </td>
+<?php else: ?>
+              <td>
+                <div class="video-cell">
+                  <img class="video-thumb" src="https://i.ytimg.com/vi/<?= h($video['youtube']) ?>/default.jpg" alt="" loading="lazy" width="64" height="36">
+                  <span><?= $video['title'] !== '' ? h($video['title']) : '<span class="muted">Untitled</span>' ?></span>
+                </div>
+              </td>
+              <td class="muted"><?= $video['note'] !== '' ? h($video['note']) : '&ndash;' ?></td>
+              <td><a href="https://www.youtube.com/watch?v=<?= h($video['youtube']) ?>" target="_blank" rel="noopener"><?= h($video['youtube']) ?></a></td>
+              <td class="num">
+                <div class="row-actions">
+<?php foreach (['up' => ['↑', 'Move up'], 'down' => ['↓', 'Move down']] as $way => [$arrow, $text]): $off = ($way === 'up' && $n === 0) || ($way === 'down' && $n === $last); ?>
+                  <form method="post" action="videos.php"><?= csrfField() ?><input type="hidden" name="action" value="move"><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="dir" value="<?= $way ?>"><button class="btn btn-ghost btn-small btn-icon" type="submit" title="<?= $text ?>" aria-label="<?= $text ?>"<?= $off ? ' disabled' : '' ?>><?= $arrow ?></button></form>
 <?php endforeach; ?>
-          <span class="spacer"></span>
-          <form method="post" action="videos.php" onsubmit="return confirm(<?= h(json_encode('Remove ' . videoName($video) . ' from ' . GALLERIES[$gallery] . '? It stays on YouTube.')) ?>)">
-            <?= csrfField() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= $id ?>">
-            <button class="btn btn-danger btn-small" type="submit">Remove from site</button>
-          </form>
-        </div>
-      </details>
+                  <a class="btn btn-ghost btn-small" href="videos.php?edit=<?= $id ?>#video-<?= $id ?>">Edit</a>
+                  <form method="post" action="videos.php" onsubmit="return confirm(<?= h(json_encode('Remove ' . videoName($video) . ' from ' . GALLERIES[$gallery] . '? It stays on YouTube.')) ?>)">
+                    <?= csrfField() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= $id ?>">
+                    <button class="btn btn-danger btn-small" type="submit">Remove</button>
+                  </form>
+                </div>
+              </td>
+<?php endif; ?>
+            </tr>
 <?php $n++; endforeach; ?>
+          </tbody>
+        </table>
+      </div>
 <?php endforeach; ?>
 <?php endif; ?>
 <?php pageEnd(); ?>

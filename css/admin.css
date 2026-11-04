@@ -86,5 +86,12 @@
 @media (max-width: 640px) { .file-row { grid-template-columns: 1fr; } }
 
 /* youtube page */
-.video-thumb { width: 120px; height: 68px; object-fit: cover; border-radius: 8px; flex: none; background: var(--ink); }
-.video-card summary h3 small { display: block; margin: 4px 0 0; }
+.video-table td { padding-top: 8px; padding-bottom: 8px; }
+.video-table td:first-child { width: 1%; }
+.video-cell { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.video-thumb { width: 64px; height: 36px; object-fit: cover; border-radius: 6px; flex: none; background: var(--ink); }
+.video-table tr.is-editing td { background: var(--surface); }
+.video-table input[type="text"], .video-table select { padding: 7px 12px; min-width: 140px; }
+.video-edit-link { display: grid; gap: 6px; min-width: 200px; }
+.btn-icon { padding: 8px 12px; }
+.btn-small:disabled { opacity: .3; cursor: default; }
