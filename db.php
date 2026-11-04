@@ -1,6 +1,6 @@
 <?php
 
-// Shared settings and database connection for track.php and admin.php.
+// Shared settings and database connection for track.php, midi.php and admin.php.
 // Everything comes from config.php (not in the repository; see config.example.php).
 
 declare(strict_types=1);
@@ -50,6 +50,15 @@ function db(): PDO
         . 'clicked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,'
         . 'PRIMARY KEY (id),'
         . 'KEY idx_video_clicks_video (video_id)'
+        . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS midi_downloads ('
+        . 'id INT UNSIGNED NOT NULL AUTO_INCREMENT,'
+        . 'song_id VARCHAR(100) NOT NULL,'
+        . 'downloaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,'
+        . 'PRIMARY KEY (id),'
+        . 'KEY idx_midi_downloads_song (song_id)'
         . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
     return $pdo;

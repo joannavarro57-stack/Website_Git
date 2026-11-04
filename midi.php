@@ -90,6 +90,16 @@ if ($action === 'download') {
         $path = rtrim(midiConfig('files_dir'), '/') . '/' . $file;
         if (!is_file($path)) page(404, "This MIDI file is being prepared and isn't uploaded yet. Please check back soon, or email info@reecemusic.com.");
 
+        // Count it for admin.php. Stats must never stop the download, so errors are only logged.
+        if (!preg_match('/bot|crawl|spider|slurp|preview|headless/i', (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
+            try {
+                require_once __DIR__ . '/db.php';
+                db()->prepare('INSERT INTO midi_downloads (song_id) VALUES (?)')->execute([$song['id']]);
+            } catch (Throwable $e) {
+                error_log('MIDI download could not be counted: ' . $e->getMessage());
+            }
+        }
+
         header('Content-Type: audio/midi');
         header('Content-Disposition: attachment; filename="' . $file . '"');
         header('Content-Length: ' . filesize($path));

@@ -127,17 +127,30 @@ if ($signedIn) {
                 'SELECT COUNT(DISTINCT extra.id) FROM mailing_list_subscribers extra JOIN mailing_list_subscribers keep'
                 . ' ON ' . SAME_EMAIL . ' AND keep.id < extra.id'
             )->fetchColumn(),
-            'totals' => $pdo->query(
-                'SELECT COUNT(*) AS total, COALESCE(SUM(clicked_at >= NOW() - INTERVAL 30 DAY), 0) AS recent,'
-                . ' COALESCE(SUM(kind = \'play\'), 0) AS plays, COALESCE(SUM(kind = \'link\'), 0) AS links FROM video_clicks'
-            )->fetch(),
+            'plays' => (int) $pdo->query('SELECT COUNT(*) FROM video_clicks WHERE kind = \'play\'')->fetchColumn(),
             'videos' => $pdo->query(
                 'SELECT video_id, MAX(title) AS title, COUNT(*) AS total, SUM(kind = \'play\') AS plays, SUM(kind = \'link\') AS links,'
                 . ' SUM(clicked_at >= NOW() - INTERVAL 30 DAY) AS recent, MAX(clicked_at) AS last_click'
                 . ' FROM video_clicks GROUP BY video_id ORDER BY total DESC, last_click DESC'
             )->fetchAll(),
-            'pages' => $pdo->query('SELECT page, COUNT(*) AS total FROM video_clicks GROUP BY page ORDER BY total DESC')->fetchAll()
+            'pages' => $pdo->query('SELECT page, COUNT(*) AS total FROM video_clicks GROUP BY page ORDER BY total DESC')->fetchAll(),
+            'downloads' => $pdo->query(
+                'SELECT song_id, COUNT(*) AS total, SUM(downloaded_at >= NOW() - INTERVAL 30 DAY) AS recent, MAX(downloaded_at) AS last_download'
+                . ' FROM midi_downloads GROUP BY song_id'
+            )->fetchAll(PDO::FETCH_UNIQUE)
         ];
+
+        // Every song in the catalog gets a row, downloaded or not; songs since removed from it still show by id.
+        $songs = [];
+        foreach (json_decode((string) @file_get_contents(__DIR__ . '/data/midi-songs.json'), true) ?: [] as $song) {
+            $songs[$song['id']] = ['title' => $song['title'], 'artist' => $song['artist'], 'total' => 0, 'recent' => 0, 'last_download' => null];
+        }
+        foreach ($data['downloads'] as $id => $row) {
+            $songs[$id] = array_merge($songs[$id] ?? ['title' => $id, 'artist' => 'No longer on the song list'], $row);
+        }
+        uasort($songs, static fn($a, $b) => [$b['total'], $a['title']] <=> [$a['total'], $b['title']]);
+        $data['songs'] = $songs;
+        $data['downloadTotal'] = array_sum(array_column($songs, 'total'));
     } catch (Throwable $exception) {
         error_log('Admin stats failed: ' . $exception->getMessage());
         $dbError = 'The database is unavailable. Check the database settings in config.php.';
@@ -223,10 +236,62 @@ $pageNames = [
 
       <div class="stats">
         <div class="stat"><strong><?= count($data['subscribers']) ?></strong><span>Mailing-list subscribers</span></div>
-        <div class="stat"><strong><?= (int) $data['totals']['total'] ?></strong><span>YouTube clicks, all time</span></div>
-        <div class="stat"><strong><?= (int) $data['totals']['recent'] ?></strong><span>YouTube clicks, last 30 days</span></div>
-        <div class="stat"><strong><?= (int) $data['totals']['plays'] ?></strong><span>Videos played on the site</span></div>
-        <div class="stat"><strong><?= (int) $data['totals']['links'] ?></strong><span>Clicks through to YouTube</span></div>
+        <div class="stat"><strong><?= (int) $data['plays'] ?></strong><span>Videos played on the site</span></div>
+        <div class="stat"><strong><?= (int) $data['downloadTotal'] ?></strong><span>MIDI downloads</span></div>
+      </div>
+
+      <div class="admin-head" style="margin:56px 0 18px">
+        <h2 style="margin:0">Mailing-list subscribers<small><?= count($data['subscribers']) ?></small></h2>
+        <?php if ($data['subscribers']): ?><a class="btn btn-ghost" href="admin.php?export=subscribers">Download CSV</a><?php endif; ?>
+      </div>
+<?php if ($flash): ?>
+      <p class="notice" role="status" style="margin-bottom:18px"><?= h($flash) ?></p>
+<?php endif; ?>
+<?php if ($data['duplicates']): ?>
+      <form class="notice" method="post" action="admin.php" style="margin-bottom:18px" onsubmit="return confirm('Remove <?= $data['duplicates'] ?> duplicate subscriber(s)? Each person keeps their first signup.')">
+        <p style="margin:0 0 12px"><?= $data['duplicates'] === 1 ? '1 subscriber is listed twice.' : $data['duplicates'] . ' extra copies of the same email addresses are on the list.' ?> Removing them keeps each person's first signup.</p>
+        <input type="hidden" name="action" value="dedupe">
+        <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+        <button class="btn btn-brass" type="submit">Remove duplicates</button>
+      </form>
+<?php endif; ?>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Email</th><th>Signed up from</th><th>Date</th></tr></thead>
+          <tbody>
+<?php if (!$data['subscribers']): ?>
+            <tr class="empty-row"><td colspan="3">No subscribers yet.</td></tr>
+<?php endif; ?>
+<?php foreach ($data['subscribers'] as $row): ?>
+            <tr>
+              <td><a href="mailto:<?= h($row['email']) ?>"><?= h($row['email']) ?></a></td>
+              <td><?= h($row['source']) ?></td>
+              <td class="when"><?= h(date('j M Y, H:i', strtotime($row['subscribed_at']))) ?></td>
+            </tr>
+<?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>MIDI downloads by song<small><?= count($data['songs']) ?> songs</small></h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Song</th><th>Artist</th><th class="num">Last 30 days</th><th class="num">Total</th><th>Last download</th></tr></thead>
+          <tbody>
+<?php if (!$data['songs']): ?>
+            <tr class="empty-row"><td colspan="5">No songs on the list yet (data/midi-songs.json).</td></tr>
+<?php endif; ?>
+<?php foreach ($data['songs'] as $id => $row): ?>
+            <tr>
+              <td><a href="song.html?id=<?= h(rawurlencode((string) $id)) ?>" target="_blank" rel="noopener"><?= h($row['title']) ?></a></td>
+              <td class="muted"><?= h($row['artist']) ?></td>
+              <td class="num"><?= (int) $row['recent'] ?></td>
+              <td class="num"><strong><?= (int) $row['total'] ?></strong></td>
+              <td class="when"><?= $row['last_download'] ? h(date('j M Y, H:i', strtotime($row['last_download']))) : '&ndash;' ?></td>
+            </tr>
+<?php endforeach; ?>
+          </tbody>
+        </table>
       </div>
 
       <h2>YouTube clicks by video<small><?= count($data['videos']) ?> videos</small></h2>
@@ -264,39 +329,6 @@ $pageNames = [
         </table>
       </div>
 <?php endif; ?>
-
-      <div class="admin-head" style="margin:56px 0 18px">
-        <h2 style="margin:0">Mailing-list subscribers<small><?= count($data['subscribers']) ?></small></h2>
-        <?php if ($data['subscribers']): ?><a class="btn btn-ghost" href="admin.php?export=subscribers">Download CSV</a><?php endif; ?>
-      </div>
-<?php if ($flash): ?>
-      <p class="notice" role="status" style="margin-bottom:18px"><?= h($flash) ?></p>
-<?php endif; ?>
-<?php if ($data['duplicates']): ?>
-      <form class="notice" method="post" action="admin.php" style="margin-bottom:18px" onsubmit="return confirm('Remove <?= $data['duplicates'] ?> duplicate subscriber(s)? Each person keeps their first signup.')">
-        <p style="margin:0 0 12px"><?= $data['duplicates'] === 1 ? '1 subscriber is listed twice.' : $data['duplicates'] . ' extra copies of the same email addresses are on the list.' ?> Removing them keeps each person's first signup.</p>
-        <input type="hidden" name="action" value="dedupe">
-        <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
-        <button class="btn btn-brass" type="submit">Remove duplicates</button>
-      </form>
-<?php endif; ?>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th>Email</th><th>Signed up from</th><th>Date</th></tr></thead>
-          <tbody>
-<?php if (!$data['subscribers']): ?>
-            <tr class="empty-row"><td colspan="3">No subscribers yet.</td></tr>
-<?php endif; ?>
-<?php foreach ($data['subscribers'] as $row): ?>
-            <tr>
-              <td><a href="mailto:<?= h($row['email']) ?>"><?= h($row['email']) ?></a></td>
-              <td><?= h($row['source']) ?></td>
-              <td class="when"><?= h(date('j M Y, H:i', strtotime($row['subscribed_at']))) ?></td>
-            </tr>
-<?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
 <?php endif; ?>
     </div>
   </main>
