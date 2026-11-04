@@ -298,9 +298,10 @@
           var d = DOWNLOADS[f];
           return "<li" + (i === 0 ? ' class="is-featured"' : "") + "><div><strong>" + d.title + '</strong><span class="muted">' + d.note + "</span></div>" +
             '<span class="tier-price">Free</span>' +
-            '<a class="btn ' + (i === 0 ? "btn-brass" : "btn-ghost") + '" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) +
-              "&amp;format=" + f + '">' + d.button + "</a></li>";
-        }).join("") || '<li><div><strong>Downloads coming soon</strong><span class="muted">The MIDI and sheet music for this song are on the way</span></div></li>';
+            '<div class="btn-row"><a class="btn ' + (i === 0 ? "btn-brass" : "btn-ghost") + '" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) +
+              "&amp;format=" + f + '">' + d.button + "</a>" + donateBtn("btn-ghost") + "</div></li>";
+        }).join("") || '<li><div><strong>Downloads coming soon</strong><span class="muted">The MIDI and sheet music for this song are on the way</span></div></li>' +
+          '<li><div><strong>Support Reece</strong><span class="muted">A donation keeps new songs coming</span></div><div class="btn-row">' + donateBtn("btn-ghost") + "</div></li>";
         songRoot.innerHTML =
           '<section class="page-hero"><div class="wrap">' +
             '<a class="text-link" href="learn.html">All songs</a>' +
@@ -309,12 +310,7 @@
           "</div></section>" +
           '<section class="section"><div class="wrap song-layout">' +
             '<div class="song-video">' + video + "</div>" +
-            '<div><ul class="tiers">' + downloads +
-              (yt ? '<li><div><strong>Video tutorial</strong><span class="muted">Reece plays it through, step by step</span></div>' +
-                '<a class="btn btn-ghost" href="https://www.youtube.com/watch?v=' + yt + '" data-title="' + escapeHtml(s.title) + ' tutorial" target="_blank" rel="noopener">Watch on YouTube</a></li>' : "") +
-              '<li><div><strong>Support Reece</strong><span class="muted">If the file helps, a donation keeps new ones coming</span></div>' +
-                donateBtn("btn-ghost") + "</li>" +
-            "</ul></div></div></section>";
+            '<div><ul class="tiers">' + downloads + "</ul></div></div></section>";
       })
       .catch(notFound);
   }

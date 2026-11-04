@@ -388,7 +388,8 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .tiers li > div strong { font-family: var(--display); font-weight: 400; font-size: 1.3rem; display: block; }
 .tiers li > div span { font-size: .92rem; }
 .tier-price { color: var(--accent); font-size: 1.2rem; font-variant-numeric: tabular-nums; text-align: right; }
-.tiers li .btn { grid-column: 1 / -1; justify-self: start; padding: 11px 22px; font-size: .95rem; }
+.tiers li .btn-row { grid-column: 1 / -1; }
+.tiers li .btn { padding: 11px 22px; font-size: .95rem; }
 .tiers li.is-featured strong { color: var(--accent); }
 .btn:disabled { opacity: .6; cursor: progress; }
 
