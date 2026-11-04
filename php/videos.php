@@ -176,7 +176,8 @@ pageStart('YouTube', 'videos.php', true);
       </details>
 
 <?php foreach ($byGallery as $gallery => $videos): $last = count($videos) - 1; ?>
-      <h2 id="gallery-<?= h($gallery) ?>"><?= h(GALLERIES[$gallery]) ?><small><?= count($videos) ?> <?= count($videos) === 1 ? 'video' : 'videos' ?>, in the order visitors see them</small></h2>
+      <details class="gallery-group" id="gallery-<?= h($gallery) ?>"<?= isset($videos[$editId]) ? ' open' : '' ?>>
+      <summary><h2><?= h(GALLERIES[$gallery]) ?><small><?= count($videos) ?> <?= count($videos) === 1 ? 'video' : 'videos' ?>, in the order visitors see them</small></h2></summary>
       <div class="table-scroll">
         <table class="video-table">
           <thead><tr><th class="num">#</th><th>Video</th><th>Note</th><th>YouTube</th><th class="num"><span class="visually-hidden">Actions</span></th></tr></thead>
@@ -235,6 +236,29 @@ pageStart('YouTube', 'videos.php', true);
           </tbody>
         </table>
       </div>
+      </details>
 <?php endforeach; ?>
+      <script>
+        // Galleries open and close on their heading. The ones left open stay open next time, and the gallery
+        // holding whatever the page jumps to (#video-… after a save, move or removal) always opens.
+        (function () {
+          var groups = document.querySelectorAll(".gallery-group"), saved = [];
+          try { saved = JSON.parse(localStorage.getItem("reece-admin-open-galleries") || "[]"); } catch (e) {}
+          var reveal = function () {
+            var target = location.hash && document.getElementById(location.hash.slice(1));
+            var group = target && target.closest(".gallery-group");
+            if (group && !group.open) { group.open = true; target.scrollIntoView(); }
+          };
+          groups.forEach(function (g) {
+            if (saved.indexOf(g.id) !== -1) g.open = true;
+            g.addEventListener("toggle", function () {
+              var open = [].filter.call(groups, function (x) { return x.open; }).map(function (x) { return x.id; });
+              try { localStorage.setItem("reece-admin-open-galleries", JSON.stringify(open)); } catch (e) {}
+            });
+          });
+          reveal();
+          window.addEventListener("hashchange", reveal);
+        })();
+      </script>
 <?php endif; ?>
 <?php pageEnd(); ?>
