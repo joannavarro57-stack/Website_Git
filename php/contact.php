@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+// Times in UAE time (Asia/Dubai, UTC+4), whatever time zone the shared server runs on.
+date_default_timezone_set('Asia/Dubai');
+
 header('Content-Type: application/json; charset=UTF-8');
 
 function sendSmtpEmail(array $smtp, string $to, string $subject, string $textBody, string $htmlBody): bool

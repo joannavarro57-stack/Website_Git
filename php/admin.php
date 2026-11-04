@@ -159,7 +159,7 @@ pageStart('Stats', 'admin.php', $signedIn);
           <p class="kicker">Reece Music</p>
           <h1>Site stats</h1>
         </div>
-        <p class="muted" style="margin:0">Updated <?= h(date('j M Y, H:i')) ?> server time</p>
+        <p class="muted" style="margin:0">Updated <?= h(date('j M Y, H:i')) ?> UAE time</p>
       </div>
 
       <div class="stats">

@@ -10,6 +10,10 @@ if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
     exit;
 }
 
+// Show and record every time in UAE time (Asia/Dubai, UTC+4, no daylight saving),
+// whatever time zone Tasjeel's shared server runs on.
+date_default_timezone_set('Asia/Dubai');
+
 function siteConfig(): array
 {
     static $config = null;
@@ -38,6 +42,8 @@ function db(): PDO
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false
     ]);
+    // MySQL keeps TIMESTAMP columns in UTC internally; this makes it read and write them in UAE time.
+    $pdo->exec("SET time_zone = '+04:00'");
 
     // Same definition as database/schema.sql, so the stats work without a manual setup step.
     $pdo->exec(
