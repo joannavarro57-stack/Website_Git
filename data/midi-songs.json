@@ -5,7 +5,11 @@
     "artist": "Coldplay",
     "youtubeId": "",
     "description": "The iconic piano riff, broken down for beginners.",
-    "file": "clocks.mid"
+    "files": {
+      "midi": "clocks.mid",
+      "pdf": "clocks.pdf",
+      "musicxml": "clocks.musicxml"
+    }
   },
   {
     "id": "river-flows",
@@ -13,6 +17,10 @@
     "artist": "Yiruma",
     "youtubeId": "",
     "description": "A modern piano classic for finger independence and pedal control.",
-    "file": "river-flows.mid"
+    "files": {
+      "midi": "river-flows.mid",
+      "pdf": "river-flows.pdf",
+      "musicxml": "river-flows.musicxml"
+    }
   }
 ]

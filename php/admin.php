@@ -135,7 +135,8 @@ if ($signedIn) {
             )->fetchAll(),
             'pages' => $pdo->query('SELECT page, COUNT(*) AS total FROM video_clicks GROUP BY page ORDER BY total DESC')->fetchAll(),
             'downloads' => $pdo->query(
-                'SELECT song_id, COUNT(*) AS total, SUM(downloaded_at >= NOW() - INTERVAL 30 DAY) AS recent, MAX(downloaded_at) AS last_download'
+                'SELECT song_id, SUM(format = \'midi\') AS midi, SUM(format = \'pdf\') AS pdf, SUM(format = \'musicxml\') AS musicxml,'
+                . ' COUNT(*) AS total, SUM(downloaded_at >= NOW() - INTERVAL 30 DAY) AS recent, MAX(downloaded_at) AS last_download'
                 . ' FROM midi_downloads GROUP BY song_id'
             )->fetchAll(PDO::FETCH_UNIQUE)
         ];
@@ -143,7 +144,8 @@ if ($signedIn) {
         // Every song in the catalog gets a row, downloaded or not; songs since removed from it still show by id.
         $songs = [];
         foreach (json_decode((string) @file_get_contents(dirname(__DIR__) . '/data/midi-songs.json'), true) ?: [] as $song) {
-            $songs[$song['id']] = ['title' => $song['title'], 'artist' => $song['artist'], 'total' => 0, 'recent' => 0, 'last_download' => null];
+            $songs[$song['id']] = ['title' => $song['title'], 'artist' => $song['artist'], 'midi' => 0, 'pdf' => 0, 'musicxml' => 0,
+                'total' => 0, 'recent' => 0, 'last_download' => null];
         }
         foreach ($data['downloads'] as $id => $row) {
             $songs[$id] = array_merge($songs[$id] ?? ['title' => $id, 'artist' => 'No longer on the song list'], $row);
@@ -240,7 +242,7 @@ foreach (['sight-and-sound' => 'Sight & Sound', 'learn' => 'Play it yourself', '
       <div class="stats">
         <div class="stat"><strong><?= count($data['subscribers']) ?></strong><span>Mailing-list subscribers</span></div>
         <div class="stat"><strong><?= (int) $data['plays'] ?></strong><span>Videos played on the site</span></div>
-        <div class="stat"><strong><?= (int) $data['downloadTotal'] ?></strong><span>MIDI downloads</span></div>
+        <div class="stat"><strong><?= (int) $data['downloadTotal'] ?></strong><span>Downloads (MIDI &amp; sheet music)</span></div>
       </div>
 
       <div class="admin-head" style="margin:56px 0 18px">
@@ -276,18 +278,21 @@ foreach (['sight-and-sound' => 'Sight & Sound', 'learn' => 'Play it yourself', '
         </table>
       </div>
 
-      <h2>MIDI downloads by song<small><?= count($data['songs']) ?> songs</small></h2>
+      <h2>Downloads by song<small><?= count($data['songs']) ?> songs</small></h2>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Song</th><th>Artist</th><th class="num">Last 30 days</th><th class="num">Total</th><th>Last download</th></tr></thead>
+          <thead><tr><th>Song</th><th>Artist</th><th class="num">MIDI</th><th class="num">PDF</th><th class="num">MusicXML</th><th class="num">Last 30 days</th><th class="num">Total</th><th>Last download</th></tr></thead>
           <tbody>
 <?php if (!$data['songs']): ?>
-            <tr class="empty-row"><td colspan="5">No songs on the list yet (data/midi-songs.json).</td></tr>
+            <tr class="empty-row"><td colspan="8">No songs on the list yet (data/midi-songs.json).</td></tr>
 <?php endif; ?>
 <?php foreach ($data['songs'] as $id => $row): ?>
             <tr>
               <td><a href="../pages/song.html?id=<?= h(rawurlencode((string) $id)) ?>" target="_blank" rel="noopener"><?= h($row['title']) ?></a></td>
               <td class="muted"><?= h($row['artist']) ?></td>
+              <td class="num"><?= (int) $row['midi'] ?></td>
+              <td class="num"><?= (int) $row['pdf'] ?></td>
+              <td class="num"><?= (int) $row['musicxml'] ?></td>
               <td class="num"><?= (int) $row['recent'] ?></td>
               <td class="num"><strong><?= (int) $row['total'] ?></strong></td>
               <td class="when"><?= $row['last_download'] ? h(date('j M Y, H:i', strtotime($row['last_download']))) : '&ndash;' ?></td>

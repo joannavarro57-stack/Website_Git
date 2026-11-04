@@ -1,12 +1,23 @@
 <?php
-// Free MIDI downloads for reecemusic.com ("Play it yourself").
-//   GET  midi.php?action=songs[&id=X]       → song list, or one song
-//   GET  midi.php?action=download&id=<id>   → that song's MIDI file
+// Free downloads for reecemusic.com ("Play it yourself"): MIDI and sheet music (PDF, MusicXML) per song.
+//   GET  midi.php?action=songs[&id=X]                                  → song list, or one song
+//   GET  midi.php?action=download&id=<id>[&format=midi|pdf|musicxml]  → one of that song's files (MIDI by default)
 // Catalog: data/midi-songs.json. Files: the private folder set in config.php (outside public_html).
 
 declare(strict_types=1);
 
 final class NotConfigured extends RuntimeException {}
+
+// What each song can offer. The catalog names a file per format under "files"; its extension picks the content type.
+const FORMATS = [
+    'midi' => ['label' => 'MIDI', 'types' => ['mid' => 'audio/midi', 'midi' => 'audio/midi']],
+    'pdf' => ['label' => 'PDF sheet music', 'types' => ['pdf' => 'application/pdf']],
+    'musicxml' => ['label' => 'MusicXML sheet music', 'types' => [
+        'musicxml' => 'application/vnd.recordare.musicxml+xml',
+        'xml' => 'application/vnd.recordare.musicxml+xml',
+        'mxl' => 'application/vnd.recordare.musicxml'
+    ]]
+];
 
 function sendJson(int $status, array $body, string $cache = 'no-store'): void
 {
@@ -44,7 +55,15 @@ function findSong(mixed $id): ?array
     return null;
 }
 
-// What the browser may see: never the stored file name.
+// format => stored file name. Older entries name only their MIDI, as "file".
+function songFiles(array $s): array
+{
+    $files = (array) ($s['files'] ?? []);
+    if (!isset($files['midi']) && !empty($s['file'])) $files['midi'] = $s['file'];
+    return array_intersect_key(array_filter($files), FORMATS);
+}
+
+// What the browser may see: never the stored file names.
 function publicSong(array $s): array
 {
     return [
@@ -52,7 +71,8 @@ function publicSong(array $s): array
         'title' => $s['title'],
         'artist' => $s['artist'],
         'description' => $s['description'],
-        'youtubeId' => $s['youtubeId'] ?? ''
+        'youtubeId' => $s['youtubeId'] ?? '',
+        'formats' => array_keys(array_intersect_key(FORMATS, songFiles($s)))  // in FORMATS order
     ];
 }
 
@@ -85,22 +105,30 @@ if ($action === 'download') {
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') page(405, 'Method not allowed.');
     $song = findSong($_GET['id'] ?? '');
     if (!$song) page(404, "That song isn't on the list.");
+    $format = (string) ($_GET['format'] ?? 'midi');
+    $file = basename((string) (songFiles($song)[$format] ?? ''));
+    if (!isset(FORMATS[$format]) || $file === '') page(404, "This song doesn't have that download.");
+    $label = FORMATS[$format]['label'];
+    $type = FORMATS[$format]['types'][strtolower(pathinfo($file, PATHINFO_EXTENSION))] ?? null;
+    if ($type === null) {
+        error_log("Catalog file {$file} for {$song['id']} is not a {$format} file.");
+        page(404, "This {$label} file isn't available. Please email info@reecemusic.com.");
+    }
     try {
-        $file = basename((string) $song['file']);
         $path = rtrim(midiConfig('files_dir'), '/') . '/' . $file;
-        if (!is_file($path)) page(404, "This MIDI file is being prepared and isn't uploaded yet. Please check back soon, or email info@reecemusic.com.");
+        if (!is_file($path)) page(404, "This {$label} file is being prepared and isn't uploaded yet. Please check back soon, or email info@reecemusic.com.");
 
         // Count it for admin.php. Stats must never stop the download, so errors are only logged.
         if (!preg_match('/bot|crawl|spider|slurp|preview|headless/i', (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
             try {
                 require_once __DIR__ . '/db.php';
-                db()->prepare('INSERT INTO midi_downloads (song_id) VALUES (?)')->execute([$song['id']]);
+                db()->prepare('INSERT INTO midi_downloads (song_id, format) VALUES (?, ?)')->execute([$song['id'], $format]);
             } catch (Throwable $e) {
-                error_log('MIDI download could not be counted: ' . $e->getMessage());
+                error_log('Download could not be counted: ' . $e->getMessage());
             }
         }
 
-        header('Content-Type: audio/midi');
+        header('Content-Type: ' . $type);
         header('Content-Disposition: attachment; filename="' . $file . '"');
         header('Content-Length: ' . filesize($path));
         header('Cache-Control: no-store');

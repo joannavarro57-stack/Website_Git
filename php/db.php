@@ -56,10 +56,15 @@ function db(): PDO
         'CREATE TABLE IF NOT EXISTS midi_downloads ('
         . 'id INT UNSIGNED NOT NULL AUTO_INCREMENT,'
         . 'song_id VARCHAR(100) NOT NULL,'
+        . 'format VARCHAR(10) NOT NULL DEFAULT \'midi\','
         . 'downloaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,'
         . 'PRIMARY KEY (id),'
         . 'KEY idx_midi_downloads_song (song_id)'
         . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
+    // Tables made before sheet music was added only counted MIDI; those rows keep format 'midi'.
+    if (!$pdo->query("SHOW COLUMNS FROM midi_downloads LIKE 'format'")->fetch()) {
+        $pdo->exec('ALTER TABLE midi_downloads ADD COLUMN format VARCHAR(10) NOT NULL DEFAULT \'midi\' AFTER song_id');
+    }
     return $pdo;
 }

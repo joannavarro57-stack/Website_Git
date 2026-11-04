@@ -27,13 +27,15 @@ Until `config.php` is in place, the forms open a pre-filled email to info@reecem
 
 ## Free MIDI ("Play it yourself")
 
-Pages: `pages/learn.html` (all songs) and `pages/song.html?id=…` (one song: MIDI download, YouTube tutorial, PayPal donate).
+Pages: `pages/learn.html` (all songs) and `pages/song.html?id=…` (one song: MIDI, PDF and MusicXML downloads, YouTube tutorial, PayPal donate).
 Songs: `data/midi-songs.json` (the `data/` folder is blocked from the web by its `.htaccess`).
-Each song has an `id`, `title`, `artist`, `description`, `youtubeId` (the 11-character video ID) and `file`.
+Each song has an `id`, `title`, `artist`, `description`, `youtubeId` (the 11-character video ID) and `files`, which names the
+file for each download it offers: `midi` (`.mid`), `pdf` (`.pdf`) and `musicxml` (`.musicxml`, `.xml` or compressed `.mxl`).
+Leave a format out and its download button doesn't appear.
 
-MIDI files must never be in this public repo or in `public_html`. Upload them to the private folder set as
-`midi.files_dir` in `config.php` (default `/home/reecemus/midi-files`), named exactly as `file` in `midi-songs.json`.
+The files must never be in this public repo or in `public_html`. Upload them to the private folder set as
+`midi.files_dir` in `config.php` (default `/home/reecemus/midi-files`), named exactly as in `files` in `midi-songs.json`.
 
 Donate buttons use the PayPal link in `js/config.js` (`paypal`). While it is empty, every Donate button stays hidden.
 
-To add a song: add an entry to `data/midi-songs.json` and upload its MIDI file to the private folder.
+To add a song: add an entry to `data/midi-songs.json` and upload its files to the private folder.
