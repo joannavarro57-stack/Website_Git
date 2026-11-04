@@ -173,7 +173,7 @@ $pageNames = [
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/reece.css?v=2026-11-thin-frame">
+  <link rel="stylesheet" href="css/reece.css?v=2026-11-admin-link">
   <style>
     .admin { padding: clamp(40px, 6vw, 72px) 0 96px; }
     .admin-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 40px; }
