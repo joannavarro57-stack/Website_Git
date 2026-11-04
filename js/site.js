@@ -48,8 +48,8 @@
 
     // The visualizer: a small Earth with satellites circling it on crossing orbits, after Reece's constellation
     // picture. The orbits are real 3D circles at steep, varied tilts (like a GPS constellation), so satellites fly
-    // over the poles and all around the sphere, and each orbit's plane slowly drifts round.
-    // Satellites pass behind the globe and come round in front of it; the scene fades out at both sides, so it has no edge.
+    // over the poles and all around the sphere, and each orbit's plane slowly drifts round. The Earth is a wire mesh.
+    // Satellites pass behind the see-through globe and come round in front of it; the scene fades out at both sides, so it has no edge.
     var viz = el.querySelector(".pp-viz"), ctx = viz.getContext && viz.getContext("2d"), vw = 0, vh = 0, lvl = 0.3;
     var spin = 0, turn = 0;
     var VIEW = -0.32; // the camera looks down on the globe a little
@@ -66,7 +66,7 @@
     // fixed, so the sky and the continents look the same on every visit
     var STARS = [], LAND;
     for (var n = 0; n < 24; n++) STARS.push([(n * 0.618) % 1, (n * 0.377 + 0.13) % 1, n * 1.7]);
-    // rough continent outlines as [longitude, latitude] in degrees: plenty at this size to read as the Earth
+    // rough coastlines as [longitude, latitude] in degrees, traced on the mesh: plenty at this size to read as the Earth
     LAND = [
       [[-168, 66], [-156, 71], [-130, 70], [-95, 72], [-80, 73], [-62, 60], [-55, 52], [-66, 45], [-75, 35], [-81, 25], [-97, 26], [-97, 18], [-87, 15], [-83, 9], [-79, 8], [-92, 15], [-105, 20], [-117, 32], [-124, 40], [-124, 48], [-135, 58], [-152, 58], [-165, 62]],
       [[-52, 60], [-42, 60], [-22, 70], [-20, 82], [-45, 83], [-60, 78], [-55, 70]],
@@ -79,9 +79,6 @@
       [[130, 31], [140, 35], [142, 41], [140, 44], [136, 36]],
       [[-6, 50], [2, 51], [-3, 58], [-6, 56]]
     ];
-    var ICE = [], CLOUDS = [];
-    for (var q = 0; q <= 24; q++) ICE.push([q * 15 - 180, -68]);
-    for (var ci = 0; ci < 9; ci++) CLOUDS.push({ lon: ci * 40, lat: Math.sin(ci * 1.9) * 50, w: 0.22 + (ci % 3) * 0.08 });
     var GLOBE_TILT = 0.38; // the north pole leans towards you
     var sizeViz = function () {
       var r = viz.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -133,8 +130,6 @@
           var th = spin * o.rate + o.offset + k * 2 * Math.PI / o.sats;
           var a = orbitPoint(o, th, R * o.size, drift), b = orbitPoint(o, th + 0.02, R * o.size, drift);
           var p = { x: cx + a.x, y: cy - a.y, z: a.z / (R * o.size), angle: Math.atan2(a.y - b.y, b.x - a.x) };
-          // hidden while it passes right behind the globe
-          if (a.z < 0 && a.x * a.x + a.y * a.y < R * R) continue;
           (a.z > 0 ? near : far).push(p);
         }
       });
@@ -143,72 +138,60 @@
       ORBITS.forEach(function (o) { ring(cx, cy, o, R * o.size, drift, false, 0.16); });
       far.forEach(function (p) { satellite(p.x, p.y, p.angle, 0.62 + 0.18 * (1 + p.z), 0.5); });
 
-      var air = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.55);
-      air.addColorStop(0, "rgba(118, 219, 227, .4)"); air.addColorStop(1, "rgba(118, 219, 227, 0)");
-      ctx.fillStyle = air;
-      ctx.beginPath(); ctx.arc(cx, cy, R * 1.55, 0, 2 * Math.PI); ctx.fill();
-      var sea = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
-      sea.addColorStop(0, "#4FA3DA"); sea.addColorStop(0.45, "#1F63B0"); sea.addColorStop(0.85, "#123A7E"); sea.addColorStop(1, "#0A1D4A");
-      ctx.save();
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.fillStyle = sea; ctx.fill(); ctx.clip();
-      // the Earth turns under the camera: a point at a longitude/latitude, as screen x/y and whether it faces you.
-      // Points round the back are pulled to the rim, so continents crossing the edge wrap neatly round it.
+      // The Earth as a see-through wire mesh: lines of latitude and longitude with the coastlines traced on top.
+      // The far side shows faintly through the sphere, the near side glows, and the whole mesh turns.
       var spinLon = turn * 1.2;
       var globePoint = function (lon, lat, out) {
         var la = lat * Math.PI / 180, lo = lon * Math.PI / 180 + spinLon;
         var x = Math.cos(la) * Math.sin(lo), y = Math.sin(la), z = Math.cos(la) * Math.cos(lo);
         var Y = y * Math.cos(GLOBE_TILT) - z * Math.sin(GLOBE_TILT), Z = y * Math.sin(GLOBE_TILT) + z * Math.cos(GLOBE_TILT);
-        if (Z < 0) { var k = 1 / Math.max(1e-6, Math.sqrt(x * x + Y * Y)); x *= k; Y *= k; }
         out.x = cx + x * R; out.y = cy - Y * R; out.front = Z >= 0;
         return out;
       };
       var pt = {};
-      var shape = function (points, fill) {
-        var shown = false;
-        ctx.beginPath();
-        points.forEach(function (ll, i) {
+      // adds to the current path the parts of a line (count points from at(i) as [lon, lat]) on one side of the sphere
+      var trace = function (count, at, front) {
+        var on = false;
+        for (var i = 0; i < count; i++) {
+          var ll = at(i);
           globePoint(ll[0], ll[1], pt);
-          if (pt.front) shown = true;
-          if (i) ctx.lineTo(pt.x, pt.y); else ctx.moveTo(pt.x, pt.y);
-        });
-        if (!shown) return;
-        ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+          var ok = pt.front === front;
+          if (ok && on) ctx.lineTo(pt.x, pt.y); else if (ok) ctx.moveTo(pt.x, pt.y);
+          on = ok;
+        }
       };
-      // faint lines of latitude and longitude
-      ctx.strokeStyle = "rgba(190, 240, 250, .13)"; ctx.lineWidth = 0.6;
-      for (var mer = -180; mer < 180; mer += 30) {
-        ctx.beginPath(); var on = false;
-        for (var la2 = -90; la2 <= 90; la2 += 6) { globePoint(mer, la2, pt); if (pt.front && on) ctx.lineTo(pt.x, pt.y); else ctx.moveTo(pt.x, pt.y); on = pt.front; }
+      var mesh = function (front) {
+        ctx.beginPath();
+        for (var mer = -180; mer < 180; mer += 15) trace(31, function (i) { return [mer, -90 + i * 6]; }, front);
+        for (var par = -75; par <= 75; par += 15) trace(61, function (i) { return [-180 + i * 6, par]; }, front);
+        ctx.strokeStyle = front ? "rgba(140, 230, 238, .5)" : "rgba(118, 219, 227, .13)";
+        ctx.lineWidth = front ? 0.8 : 0.6;
         ctx.stroke();
-      }
-      for (var par = -60; par <= 60; par += 30) {
-        ctx.beginPath(); var on2 = false;
-        for (var lo2 = -180; lo2 <= 180; lo2 += 6) { globePoint(lo2, par, pt); if (pt.front && on2) ctx.lineTo(pt.x, pt.y); else ctx.moveTo(pt.x, pt.y); on2 = pt.front; }
+      };
+      var coasts = function (front) {
+        ctx.beginPath();
+        LAND.forEach(function (l) { trace(l.length + 1, function (i) { return l[i % l.length]; }, front); });
+        ctx.strokeStyle = front ? "rgba(225, 252, 255, .9)" : "rgba(162, 232, 238, .16)";
+        ctx.lineWidth = front ? 1.1 : 0.7;
         ctx.stroke();
+      };
+      // a faint glow inside, so the mesh reads as a ball of light
+      var core = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.45);
+      core.addColorStop(0, "rgba(118, 219, 227, .14)"); core.addColorStop(0.68, "rgba(118, 219, 227, .07)"); core.addColorStop(1, "rgba(118, 219, 227, 0)");
+      ctx.fillStyle = core;
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.45, 0, 2 * Math.PI); ctx.fill();
+      mesh(false); coasts(false);
+      mesh(true); coasts(true);
+      // glowing nodes where the near lines cross
+      ctx.fillStyle = "rgba(220, 252, 255, .85)";
+      for (var nm = -180; nm < 180; nm += 30) {
+        for (var np = -60; np <= 60; np += 30) {
+          globePoint(nm, np, pt);
+          if (pt.front) ctx.fillRect(pt.x - 0.8, pt.y - 0.8, 1.6, 1.6);
+        }
       }
-      // continents, polar ice, and a few clouds drifting a little faster than the ground
-      var landFill = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
-      landFill.addColorStop(0, "#8DB36A"); landFill.addColorStop(0.5, "#4E9A57"); landFill.addColorStop(1, "#A9925B");
-      LAND.forEach(function (l, i) { shape(l, i === 1 ? "rgba(236, 246, 248, .9)" : landFill); });
-      shape(ICE, "rgba(236, 246, 248, .9)");
-      shape([[-180, 78], [-90, 78], [0, 78], [90, 78], [180, 78], [180, 90], [-180, 90]], "rgba(236, 246, 248, .85)");
-      CLOUDS.forEach(function (cl) {
-        globePoint(cl.lon + turn * 22, cl.lat, pt);
-        if (!pt.front) return;
-        ctx.fillStyle = "rgba(255, 255, 255, .28)";
-        ctx.beginPath(); ctx.ellipse(pt.x, pt.y, R * cl.w, R * cl.w * 0.32, 0, 0, 2 * Math.PI); ctx.fill();
-      });
-      // sunlight glinting off the ocean
-      var glint = ctx.createRadialGradient(cx - R * 0.4, cy - R * 0.42, 0, cx - R * 0.4, cy - R * 0.42, R * 0.7);
-      glint.addColorStop(0, "rgba(255, 255, 255, .45)"); glint.addColorStop(1, "rgba(255, 255, 255, 0)");
-      ctx.fillStyle = glint; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
-      // night side and a thin bright rim
-      var shade = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
-      shade.addColorStop(0.5, "rgba(4, 5, 14, 0)"); shade.addColorStop(1, "rgba(4, 5, 14, .62)");
-      ctx.fillStyle = shade; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
-      ctx.restore();
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
-      ctx.strokeStyle = "rgba(162, 232, 238, .55)"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = "rgba(162, 232, 238, .6)"; ctx.lineWidth = 1.2; ctx.stroke();
 
       // near halves of the orbits and their satellites, in front of the globe
       ORBITS.forEach(function (o) { ring(cx, cy, o, R * o.size, drift, true, 0.38); });
