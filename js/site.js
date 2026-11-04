@@ -96,12 +96,18 @@
       ctx.fillRect(-2.2 * scale, -2.2 * scale, 4.4 * scale, 4.4 * scale);
       ctx.restore();
     };
-    // Each satellite trails a thin line along its orbit that fades out behind it, with a few music notes sitting on
-    // the line like a stave: a random mix of crotchets, quavers and beamed pairs, picked afresh on every visit.
-    var GLYPHS = ["♩", "♪", "♫", "♬"], TRAIL = 3, TRAIL_GAP = 0.42, TAIL = 1.5, TAIL_STEPS = 20;
+    // Each satellite trails something along its orbit that fades out behind it: half of them (picked at random on
+    // every visit) a plain thin line, the other half a run of music notes, a random mix of crotchets, quavers and beamed pairs.
+    var GLYPHS = ["♩", "♪", "♫", "♬"], TRAIL = 10, TRAIL_GAP = 0.14, TAIL = 1.5, TAIL_STEPS = 20;
+    var kinds = [];
+    ORBITS.forEach(function (o) { for (var k = 0; k < o.sats; k++) kinds.push(kinds.length % 2 === 0); });
+    for (var sh = kinds.length - 1; sh > 0; sh--) {
+      var pick = Math.floor(Math.random() * (sh + 1)), tmp = kinds[sh]; kinds[sh] = kinds[pick]; kinds[pick] = tmp;
+    }
     ORBITS.forEach(function (o) {
       o.notes = [];
       for (var k = 0; k < o.sats; k++) {
+        if (!kinds.pop()) { o.notes.push(null); continue; } // a line trail
         var line = [];
         for (var j = 0; j < TRAIL; j++) line.push(GLYPHS[Math.floor(Math.random() * GLYPHS.length)]);
         o.notes.push(line);
@@ -132,7 +138,7 @@
       });
 
       // where every satellite is, and whether it's on the near or far side of the globe
-      // and the trail behind each one: a fading line with notes on it
+      // and the trail behind each one: either a fading line or a run of notes
       var near = [], far = [], nearNotes = [], farNotes = [], nearLine = [], farLine = [];
       ORBITS.forEach(function (o) {
         var r = R * o.size;
@@ -142,7 +148,7 @@
           var p = { x: cx + a.x, y: cy - a.y, z: a.z / r, angle: Math.atan2(a.y - b.y, b.x - a.x) };
           (a.z > 0 ? near : far).push(p);
           var prev = a;
-          for (var s = 1; s <= TAIL_STEPS; s++) {
+          if (!o.notes[k]) for (var s = 1; s <= TAIL_STEPS; s++) {
             var c = orbitPoint(o, th - s * TAIL / TAIL_STEPS, r, drift), front = c.z > 0;
             (front ? nearLine : farLine).push({
               x1: cx + prev.x, y1: cy - prev.y, x2: cx + c.x, y2: cy - c.y,
@@ -150,7 +156,7 @@
             });
             prev = c;
           }
-          for (var j = 0; j < TRAIL; j++) {
+          if (o.notes[k]) for (var j = 0; j < TRAIL; j++) {
             var q = orbitPoint(o, th - (j + 1) * TRAIL_GAP, r, drift), d = q.z / r;
             (q.z > 0 ? nearNotes : farNotes).push({
               x: cx + q.x, y: cy - q.y, glyph: o.notes[k][j],
