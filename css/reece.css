@@ -395,12 +395,14 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .tier-price { color: var(--accent); font-size: 1.2rem; font-variant-numeric: tabular-nums; text-align: right; }
 .tiers li .btn-row { grid-column: 1 / -1; }
 .tiers li .btn { padding: 11px 22px; font-size: .95rem; }
-.tiers li > .btn { grid-column: 1; justify-self: start; }
-/* price, "or" and the donate button stack in the right-hand column */
-.tier-side { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+/* download and donate share a row; "Free" and "or" stack above the donate button */
+.tiers li > .btn { grid-column: 1; grid-row: 2; justify-self: start; }
+.tiers li > .btn:last-child { grid-column: 2; justify-self: end; }
+.tier-side { grid-column: 2; grid-row: 1; align-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .tier-or { color: var(--muted); font-size: .92rem; }
 @media (max-width: 520px) {
-  .tier-side { grid-column: 1 / -1; grid-row: auto; order: 1; align-items: flex-start; }
+  .tier-side { grid-column: 1 / -1; grid-row: auto; align-items: flex-start; }
+  .tiers li > .btn, .tiers li > .btn:last-child { grid-column: 1 / -1; grid-row: auto; justify-self: start; }
 }
 .tiers li.is-featured strong { color: var(--accent); }
 .btn:disabled { opacity: .6; cursor: progress; }

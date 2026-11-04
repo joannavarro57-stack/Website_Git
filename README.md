@@ -5,13 +5,14 @@ every other page is in `pages/`, and the PHP scripts are in `php/`:
 
 - `php/contact.php` emails contact-form enquiries to info@reecemusic.com and saves mailing-list signups in MySQL (then sends a welcome email).
 - `php/midi.php` serves the free MIDI downloads (see below) and counts them.
-- `php/track.php` records YouTube plays and clicks; `php/admin.php` is the password-protected stats page; `php/db.php` is their shared database connection.
+- `php/track.php` records YouTube plays and clicks; `php/admin.php` is the password-protected stats page (with `php/songs.php` and `php/videos.php` for managing songs and gallery videos); `php/db.php` is their shared database connection.
 
 Pushing to `main` deploys through `.github/workflows/deploy.yml` (SSH upload). It needs these repository secrets:
 `CPANEL_HOST`, `CPANEL_PORT`, `CPANEL_USER`, `CPANEL_SSH_KEY`, `CPANEL_KNOWN_HOSTS`.
 `.cpanel.yml` does the same copy if you deploy from cPanel → Git Version Control instead.
 
-Hero playlist and recorded performances are set in `js/config.js`.
+The hero playlist is set in `js/config.js`. The Sight & Sound gallery videos are managed on the admin's YouTube page
+(`php/videos.php`); they live in the `gallery_videos` table, which `data/gallery-videos.json` seeds the first time.
 
 ## Mailing list database
 

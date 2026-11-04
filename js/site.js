@@ -103,9 +103,17 @@
   document.querySelectorAll("[data-spotify-link]").forEach(function (a) { if (cfg.spotify) a.href = cfg.spotify; });
 
   /* ---------- recorded performances: one 3D carousel per gallery ---------- */
-  var galleries = document.querySelectorAll("[data-video-gallery]");
+  // The videos are managed on the admin's YouTube page and come from the database.
+  var galleries = document.querySelectorAll("[data-video-gallery]"), galleryVideos = [];
   if (galleries.length) {
-    var vids = (cfg.videos || []).filter(function (v) { return v && /^[A-Za-z0-9_-]{11}$/.test(v.youtube || ""); });
+    fetch("/php/gallery.php", { headers: { Accept: "application/json" } })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (data) { showGalleries((data && data.videos) || []); })
+      .catch(function () { showGalleries([]); });
+  }
+
+  function showGalleries(list) {
+    var vids = galleryVideos = list.filter(function (v) { return v && /^[A-Za-z0-9_-]{11}$/.test(v.youtube || ""); });
     if (!vids.length) document.getElementById("video-empty").hidden = false;
     galleries.forEach(function (host) {
       var name = host.getAttribute("data-video-gallery");
@@ -297,9 +305,9 @@
         var downloads = songFormats(s).map(function (f, i) {
           var d = DOWNLOADS[f];
           return "<li" + (i === 0 ? ' class="is-featured"' : "") + "><div><strong>" + d.title + '</strong><span class="muted">' + d.note + "</span></div>" +
-            '<span class="tier-side"><span class="tier-price">Free</span><span class="tier-or">or</span>' + donateBtn("btn-ghost") + "</span>" +
+            '<span class="tier-side"><span class="tier-price">Free</span><span class="tier-or">or</span></span>' +
             '<a class="btn btn-ghost" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) +
-              "&amp;format=" + f + '">' + d.button + "</a></li>";
+              "&amp;format=" + f + '">' + d.button + "</a>" + donateBtn("btn-ghost") + "</li>";
         }).join("") || '<li><div><strong>Downloads coming soon</strong><span class="muted">The MIDI and sheet music for this song are on the way</span></div></li>' +
           '<li><div><strong>Support Reece</strong><span class="muted">A donation keeps new songs coming</span></div><div class="btn-row">' + donateBtn("btn-ghost") + "</div></li>";
         songRoot.innerHTML =
@@ -407,7 +415,7 @@
   /* ---------- YouTube stats for admin.php: plays on the site and clicks through to YouTube ---------- */
   function trackVideo(id, kind, title) {
     if (!navigator.sendBeacon) return;
-    var known = (cfg.videos || []).filter(function (v) { return v.youtube === id; })[0];
+    var known = galleryVideos.filter(function (v) { return v.youtube === id; })[0];
     var data = new FormData();
     data.append("video", id);
     data.append("kind", kind);

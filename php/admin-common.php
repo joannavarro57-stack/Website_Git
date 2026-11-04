@@ -1,6 +1,6 @@
 <?php
 
-// Shared by the admin pages (admin.php, songs.php): sign-in, the CSRF token, flash messages and the page frame.
+// Shared by the admin pages (admin.php, songs.php, videos.php): sign-in, the CSRF token, flash messages and the page frame.
 // Sign in with the password set under 'admin' in config.php.
 
 declare(strict_types=1);
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $password !== '' && isset($_POST['p
     if (hash_equals($password, (string) $_POST['password'])) {
         session_regenerate_id(true);
         $_SESSION['admin'] = true;
-        header('Location: admin.php');
+        header('Location: songs.php');
         exit;
     }
     sleep(2); // slows down password guessing
@@ -110,7 +110,7 @@ function redirect(string $to): void
 
 function pageStart(string $title, string $active, bool $signedIn): void
 {
-    $tabs = ['admin.php' => 'Stats', 'songs.php' => 'Songs'];
+    $tabs = ['songs.php' => 'Songs', 'videos.php' => 'YouTube', 'admin.php' => 'Stats'];
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -123,8 +123,8 @@ function pageStart(string $title, string $active, bool $signedIn): void
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/reece.css?v=2026-11-song-cards">
-  <link rel="stylesheet" href="../css/admin.css?v=2026-11-songs-2">
+  <link rel="stylesheet" href="../css/reece.css?v=2026-11-youtube">
+  <link rel="stylesheet" href="../css/admin.css?v=2026-11-youtube">
 </head>
 <body>
   <header class="site-header">

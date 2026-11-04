@@ -4,6 +4,8 @@
 // Songs and their files are managed on songs.php. Sign-in and the page frame are in admin-common.php.
 //   GET admin.php                     → dashboard (or the sign-in form)
 //   GET admin.php?export=subscribers  → subscribers as a CSV file
+//   GET admin.php?edit=…#subscribers  → that subscriber's row as an edit form
+//   POST admin.php  action=dedupe, action=update-subscriber&id=…&email=…, action=delete-subscriber&id=…
 
 declare(strict_types=1);
 
@@ -31,7 +33,43 @@ if ($signedIn && ($_POST['action'] ?? '') === 'dedupe' && validCsrf()) {
     }
     redirect('admin.php');
 }
+
+if ($signedIn && ($_POST['action'] ?? '') === 'update-subscriber' && validCsrf()) {
+    $id = (int) ($_POST['id'] ?? 0);
+    $email = trim((string) ($_POST['email'] ?? ''));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254) {
+        flash("That isn't a valid email address, so nothing was changed.", 'error');
+        redirect('admin.php?edit=' . $id . '#subscribers');
+    }
+    try {
+        $statement = db()->prepare('UPDATE mailing_list_subscribers SET email = :email WHERE id = :id');
+        $statement->execute(['email' => $email, 'id' => $id]);
+        flash('Updated the address to ' . $email . '.');
+    } catch (PDOException $exception) {
+        // 23000: the unique key refused it, so the new address is already on the list.
+        if ($exception->getCode() === '23000') {
+            flash($email . ' is already on the list. Delete this row instead.', 'error');
+            redirect('admin.php?edit=' . $id . '#subscribers');
+        }
+        error_log('Updating a subscriber failed: ' . $exception->getMessage());
+        flash('Something went wrong while saving. Nothing was changed.', 'error');
+    }
+    redirect('admin.php#subscribers');
+}
+
+if ($signedIn && ($_POST['action'] ?? '') === 'delete-subscriber' && validCsrf()) {
+    try {
+        $statement = db()->prepare('DELETE FROM mailing_list_subscribers WHERE id = :id');
+        $statement->execute(['id' => (int) ($_POST['id'] ?? 0)]);
+        flash($statement->rowCount() ? 'Removed the subscriber.' : 'That subscriber was already gone.');
+    } catch (Throwable $exception) {
+        error_log('Deleting a subscriber failed: ' . $exception->getMessage());
+        flash('Something went wrong while deleting. The list below shows what is on it now.', 'error');
+    }
+    redirect('admin.php#subscribers');
+}
 $flash = takeFlash();
+$editId = (int) ($_GET['edit'] ?? 0);
 
 if ($signedIn && ($_GET['export'] ?? '') === 'subscribers') {
     $rows = db()->query('SELECT email, source, subscribed_at FROM mailing_list_subscribers ORDER BY subscribed_at DESC')->fetchAll();
@@ -54,7 +92,7 @@ if ($signedIn) {
     try {
         $pdo = db();
         $data = [
-            'subscribers' => $pdo->query('SELECT email, source, subscribed_at FROM mailing_list_subscribers ORDER BY subscribed_at DESC')->fetchAll(),
+            'subscribers' => $pdo->query('SELECT id, email, source, subscribed_at FROM mailing_list_subscribers ORDER BY subscribed_at DESC')->fetchAll(),
             'duplicates' => (int) $pdo->query(
                 'SELECT COUNT(DISTINCT extra.id) FROM mailing_list_subscribers extra JOIN mailing_list_subscribers keep'
                 . ' ON ' . SAME_EMAIL . ' AND keep.id < extra.id'
@@ -130,7 +168,7 @@ pageStart('Stats', 'admin.php', $signedIn);
         <div class="stat"><strong><?= (int) $data['downloadTotal'] ?></strong><span>Downloads (MIDI &amp; sheet music)</span></div>
       </div>
 
-      <div class="admin-head" style="margin:56px 0 18px">
+      <div class="admin-head" id="subscribers" style="margin:56px 0 18px">
         <h2 style="margin:0">Mailing-list subscribers<small><?= count($data['subscribers']) ?></small></h2>
         <?php if ($data['subscribers']): ?><a class="btn btn-ghost" href="admin.php?export=subscribers">Download CSV</a><?php endif; ?>
       </div>
@@ -147,16 +185,39 @@ pageStart('Stats', 'admin.php', $signedIn);
 <?php endif; ?>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Email</th><th>Signed up from</th><th>Date</th></tr></thead>
+          <thead><tr><th>Email</th><th>Signed up from</th><th>Date</th><th class="num"><span class="visually-hidden">Actions</span></th></tr></thead>
           <tbody>
 <?php if (!$data['subscribers']): ?>
-            <tr class="empty-row"><td colspan="3">No subscribers yet.</td></tr>
+            <tr class="empty-row"><td colspan="4">No subscribers yet.</td></tr>
 <?php endif; ?>
 <?php foreach ($data['subscribers'] as $row): ?>
             <tr>
+<?php if ((int) $row['id'] === $editId): ?>
+              <td>
+                <form class="row-edit" method="post" action="admin.php">
+                  <?= csrfField() ?><input type="hidden" name="action" value="update-subscriber"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
+                  <label class="visually-hidden" for="edit-email">Email</label>
+                  <input id="edit-email" type="email" name="email" value="<?= h($row['email']) ?>" maxlength="254" required autofocus>
+                  <button class="btn btn-brass btn-small" type="submit">Save</button>
+                  <a class="btn btn-ghost btn-small" href="admin.php#subscribers">Cancel</a>
+                </form>
+              </td>
+<?php else: ?>
               <td><a href="mailto:<?= h($row['email']) ?>"><?= h($row['email']) ?></a></td>
+<?php endif; ?>
               <td><?= h($row['source']) ?></td>
               <td class="when"><?= h(date('j M Y, H:i', strtotime($row['subscribed_at']))) ?></td>
+              <td class="num">
+                <div class="row-actions">
+<?php if ((int) $row['id'] !== $editId): ?>
+                  <a class="btn btn-ghost btn-small" href="admin.php?edit=<?= (int) $row['id'] ?>#subscribers">Edit</a>
+<?php endif; ?>
+                  <form method="post" action="admin.php" onsubmit="return confirm(<?= h(json_encode('Remove ' . $row['email'] . " from the mailing list? This can't be undone.")) ?>)">
+                    <?= csrfField() ?><input type="hidden" name="action" value="delete-subscriber"><input type="hidden" name="id" value="<?= (int) $row['id'] ?>">
+                    <button class="btn btn-danger btn-small" type="submit">Delete</button>
+                  </form>
+                </div>
+              </td>
             </tr>
 <?php endforeach; ?>
           </tbody>
