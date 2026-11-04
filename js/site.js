@@ -96,9 +96,9 @@
       ctx.fillRect(-2.2 * scale, -2.2 * scale, 4.4 * scale, 4.4 * scale);
       ctx.restore();
     };
-    // Each satellite trails a line of music notes along its orbit instead of a drawn ring: a random mix of
-    // crotchets, quavers and beamed pairs, picked afresh on every visit, that fade out the further back they are.
-    var GLYPHS = ["♩", "♪", "♫", "♬"], TRAIL = 6, TRAIL_GAP = 0.24;
+    // Each satellite trails a thin line along its orbit that fades out behind it, with a few music notes sitting on
+    // the line like a stave: a random mix of crotchets, quavers and beamed pairs, picked afresh on every visit.
+    var GLYPHS = ["♩", "♪", "♫", "♬"], TRAIL = 3, TRAIL_GAP = 0.42, TAIL = 1.5, TAIL_STEPS = 20;
     ORBITS.forEach(function (o) {
       o.notes = [];
       for (var k = 0; k < o.sats; k++) {
@@ -111,6 +111,10 @@
       ctx.globalAlpha = n.alpha;
       ctx.font = Math.round(n.size) + 'px "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", serif';
       ctx.fillText(n.glyph, n.x, n.y);
+    };
+    var segment = function (s) {
+      ctx.globalAlpha = s.alpha;
+      ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
     };
     var drawViz = function (dt, level, t) {
       if (!ctx) return;
@@ -128,27 +132,38 @@
       });
 
       // where every satellite is, and whether it's on the near or far side of the globe
-      // and the trail of notes behind each one
-      var near = [], far = [], nearNotes = [], farNotes = [];
+      // and the trail behind each one: a fading line with notes on it
+      var near = [], far = [], nearNotes = [], farNotes = [], nearLine = [], farLine = [];
       ORBITS.forEach(function (o) {
+        var r = R * o.size;
         for (var k = 0; k < o.sats; k++) {
           var th = spin * o.rate + o.offset + k * 2 * Math.PI / o.sats;
-          var a = orbitPoint(o, th, R * o.size, drift), b = orbitPoint(o, th + 0.02, R * o.size, drift);
-          var p = { x: cx + a.x, y: cy - a.y, z: a.z / (R * o.size), angle: Math.atan2(a.y - b.y, b.x - a.x) };
+          var a = orbitPoint(o, th, r, drift), b = orbitPoint(o, th + 0.02, r, drift);
+          var p = { x: cx + a.x, y: cy - a.y, z: a.z / r, angle: Math.atan2(a.y - b.y, b.x - a.x) };
           (a.z > 0 ? near : far).push(p);
+          var prev = a;
+          for (var s = 1; s <= TAIL_STEPS; s++) {
+            var c = orbitPoint(o, th - s * TAIL / TAIL_STEPS, r, drift), front = c.z > 0;
+            (front ? nearLine : farLine).push({
+              x1: cx + prev.x, y1: cy - prev.y, x2: cx + c.x, y2: cy - c.y,
+              alpha: (front ? 0.55 : 0.2) * (1 - (s - 1) / TAIL_STEPS)
+            });
+            prev = c;
+          }
           for (var j = 0; j < TRAIL; j++) {
-            var q = orbitPoint(o, th - (j + 1) * TRAIL_GAP, R * o.size, drift), d = q.z / (R * o.size);
-            var fade = 1 - j / TRAIL;
+            var q = orbitPoint(o, th - (j + 1) * TRAIL_GAP, r, drift), d = q.z / r;
             (q.z > 0 ? nearNotes : farNotes).push({
               x: cx + q.x, y: cy - q.y, glyph: o.notes[k][j],
-              size: (q.z > 0 ? 9 + 3 * d : 7 + 1.5 * (1 + d)), alpha: (q.z > 0 ? 0.85 : 0.3) * fade
+              size: (q.z > 0 ? 8 + 2.5 * d : 6.5 + 1.2 * (1 + d)), alpha: (q.z > 0 ? 0.9 : 0.32) * (1 - j / (TRAIL + 1))
             });
           }
         }
       });
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineCap = "round";
 
-      // far halves of the note trails and the satellites on them, then the globe over them
+      // far halves of the trails and the satellites on them, then the globe over them
+      ctx.strokeStyle = "#CFECF0"; ctx.lineWidth = 0.8;
+      farLine.forEach(segment);
       ctx.fillStyle = "#CFECF0";
       farNotes.forEach(note);
       ctx.globalAlpha = 1;
@@ -209,7 +224,9 @@
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
       ctx.strokeStyle = "rgba(162, 232, 238, .6)"; ctx.lineWidth = 1.2; ctx.stroke();
 
-      // near halves of the note trails and their satellites, in front of the globe
+      // near halves of the trails and their satellites, in front of the globe
+      ctx.strokeStyle = "#E1FCFF"; ctx.lineWidth = 1;
+      nearLine.forEach(segment);
       ctx.fillStyle = "#E1FCFF";
       nearNotes.forEach(note);
       ctx.globalAlpha = 1;
