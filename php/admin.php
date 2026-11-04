@@ -145,8 +145,11 @@ pageStart('Stats', 'admin.php', $signedIn);
       <form class="login" method="post" action="admin.php">
         <p class="kicker">Reece Music</p>
         <h1>Admin</h1>
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" autocomplete="username" value="<?= h((string) ($_POST['email'] ?? '')) ?>" autofocus>
+        <p class="hint" style="margin:6px 0 0">Leave empty to sign in with the main admin password.</p>
         <label for="password">Password</label>
-        <input id="password" type="password" name="password" autocomplete="current-password" required autofocus>
+        <input id="password" type="password" name="password" autocomplete="current-password" required>
         <?php if ($loginError): ?><p class="error" role="alert"><?= h($loginError) ?></p><?php endif; ?>
         <button class="btn btn-brass" type="submit">Sign in</button>
       </form>

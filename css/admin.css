@@ -36,7 +36,7 @@
 .login .btn { margin-top: 16px; }
 
 /* forms */
-.admin input[type="text"], .admin input[type="password"], .admin input[type="url"], .admin textarea, .admin select {
+.admin input[type="text"], .admin input[type="password"], .admin input[type="url"], .admin input[type="email"], .admin textarea, .admin select {
   width: 100%; padding: 11px 14px; font: inherit; color: var(--mist);
   background: var(--ink); border: 1px solid rgba(207, 216, 220, .35); border-radius: 10px;
 }

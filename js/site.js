@@ -7,6 +7,23 @@
   /* ---------- year ---------- */
   document.querySelectorAll("[data-year]").forEach(function (el) { el.textContent = new Date().getFullYear(); });
 
+  /* ---------- sections sweep in each time they're loaded or scrolled into view ---------- */
+  // A section plays its entrance once it's a little way up the screen, and resets only after it has left the
+  // screen completely, so a section at the edge never flickers between the two.
+  if (!reduceMotion && "IntersectionObserver" in window) {
+    var revealIn = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) e.target.classList.add("is-in"); });
+    }, { rootMargin: "0px 0px -15% 0px" });
+    var revealOut = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (!e.isIntersecting) e.target.classList.remove("is-in"); });
+    });
+    document.querySelectorAll("main > section:not(.hero)").forEach(function (s) {
+      s.classList.add("reveal");
+      revealIn.observe(s);
+      revealOut.observe(s);
+    });
+  }
+
   /* ---------- mobile menu ---------- */
   var menuBtn = document.querySelector(".menu-btn");
   var nav = document.getElementById("site-nav");
