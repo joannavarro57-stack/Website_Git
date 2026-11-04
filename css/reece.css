@@ -10,7 +10,7 @@
   --accent-deep: #3A9FAB;  /* aqua toward indigo: rules and offsets */
   --accent-hover: #A2E8EE;
   --line: rgba(207, 216, 220, 0.16);
-  --display: "Bodoni Moda", "Didot", Georgia, serif;
+  --display: "Poppins", "Helvetica Neue", Arial, sans-serif;
   --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
   --wrap: 1200px;
   --gutter: clamp(16px, 4vw, 48px);
