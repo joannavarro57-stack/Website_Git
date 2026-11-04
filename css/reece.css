@@ -515,3 +515,45 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .player-bars i:nth-child(4) { animation-delay: -.75s; }
 @keyframes player-eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) { .player-bars i { animation: none; transform: scaleY(.6); } }
+
+/* =====================================================================
+   Mobile web view
+   ===================================================================== */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: rgba(118, 219, 227, .18); }
+
+/* Footer: one column that fits the screen (the email box used to push it 19px wider on 360px phones). */
+@media (max-width: 820px) {
+  .footer-grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .footer-grid ul { gap: 0; }
+  .footer-grid li a { display: block; padding: 9px 0; }
+  .footer-base { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .footer-base a { display: inline-block; padding: 9px 0; }
+  .footer-base .admin-link { margin-left: 0; }
+}
+
+/* Touchscreens: small controls keep their look but get a finger-sized (44px) touch area. */
+@media (pointer: coarse) {
+  .carousel-arrow, .text-link, .wordmark, .voice h3 a, .video-set-title a, .footer-base a { position: relative; }
+  .carousel-arrow::before { content: ""; position: absolute; inset: -9px; }
+  .text-link::before, .voice h3 a::before, .video-set-title a::before, .footer-base a::before { content: ""; position: absolute; inset: -10px -6px; }
+  .wordmark::before { content: ""; position: absolute; inset: -6px -4px; }
+  .carousel-nav { gap: 18px; margin-top: 16px; }
+}
+
+@media (max-width: 760px) {
+  /* Readable small print */
+  .carousel-count { font-size: .875rem; }
+  .sleeve-status { font-size: .85rem; }
+  /* 16px form text stops iPhone zooming the page when a field is tapped */
+  .field input, .field textarea, .field select, .subscribe input { font-size: 16px; }
+  /* Lighter section entrance on phones: no blur, shorter travel, so scrolling stays smooth */
+  .reveal { filter: none; transform: translateY(28px); transition: opacity .7s ease, transform .8s cubic-bezier(.16, .84, .24, 1); }
+  .reveal > .wrap > * { transform: translateY(18px); transition: opacity .6s ease, transform .7s cubic-bezier(.16, .84, .24, 1); }
+  .reveal.is-in > .wrap > :nth-child(1) { transition-delay: .1s; }
+  .reveal.is-in > .wrap > :nth-child(2) { transition-delay: .18s; }
+  .reveal.is-in > .wrap > :nth-child(3) { transition-delay: .26s; }
+  .reveal.is-in > .wrap > :nth-child(n+4) { transition-delay: .34s; }
+  /* Swipes on a carousel move the carousel, not the page */
+  .carousel-stage { touch-action: pan-y pinch-zoom; }
+}
