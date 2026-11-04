@@ -24,6 +24,15 @@
     });
   }
 
+  /* ---------- gallery titles: on touchscreens the laser-sword rule lights while the title is on screen ---------- */
+  // Desktops light it on hover in CSS; phones can't hover, so it runs whenever the title is in view instead.
+  if (!reduceMotion && "IntersectionObserver" in window && window.matchMedia("(hover: none)").matches) {
+    var saber = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { e.target.classList.toggle("is-lit", e.isIntersecting); });
+    }, { rootMargin: "-10% 0px -10% 0px" });
+    document.querySelectorAll(".video-set-title").forEach(function (t) { saber.observe(t); });
+  }
+
   /* ---------- mobile menu ---------- */
   var menuBtn = document.querySelector(".menu-btn");
   var nav = document.getElementById("site-nav");
