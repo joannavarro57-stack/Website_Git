@@ -25,17 +25,19 @@ Hero playlist and recorded performances are set in `js/config.js`.
 Until `config.php` is in place, the forms open a pre-filled email to info@reecemusic.com instead, so nothing is lost.
 `tools/` holds local email-preview and SMTP diagnostic helpers; they are not deployed.
 
-## Free MIDI ("Play it yourself")
+## Free MIDI and sheet music ("Play it yourself")
 
 Pages: `pages/learn.html` (all songs) and `pages/song.html?id=…` (one song: MIDI, PDF and MusicXML downloads, YouTube tutorial, PayPal donate).
-Songs: `data/midi-songs.json` (the `data/` folder is blocked from the web by its `.htaccess`).
-Each song has an `id`, `title`, `artist`, `description`, `youtubeId` (the 11-character video ID) and `files`, which names the
-file for each download it offers: `midi` (`.mid`), `pdf` (`.pdf`) and `musicxml` (`.musicxml`, `.xml` or compressed `.mxl`).
-Leave a format out and its download button doesn't appear.
 
-The files must never be in this public repo or in `public_html`. Upload them to the private folder set as
-`midi.files_dir` in `config.php` (default `/home/reecemus/midi-files`), named exactly as in `files` in `midi-songs.json`.
+**Manage songs on the admin's Songs page** (`php/songs.php`, signed in): add, edit, reorder and delete songs, and upload or
+replace each song's MIDI (`.mid`), PDF (`.pdf`) and MusicXML (`.musicxml`, `.xml` or compressed `.mxl`) files, up to 25 MB each
+(or the server's PHP upload limit if lower). Visitors only see a download once its file is uploaded.
+
+Songs are stored in the `songs` database table, so deploys never overwrite them. `data/midi-songs.json` only fills that
+table the very first time; editing it afterwards changes nothing.
+
+Uploaded files are saved as `<song id>.<extension>` in the private folder set as `midi.files_dir` in `config.php`
+(default `/home/reecemus/midi-files`), outside `public_html`. They must never be in this public repo or in `public_html`;
+`php/midi.php` serves and counts every download.
 
 Donate buttons use the PayPal link in `js/config.js` (`paypal`). While it is empty, every Donate button stays hidden.
-
-To add a song: add an entry to `data/midi-songs.json` and upload its files to the private folder.

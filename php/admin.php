@@ -1,85 +1,19 @@
 <?php
 
-// Private stats page: mailing-list subscribers and YouTube plays/clicks on the site.
-// Sign in with the password set under 'admin' in config.php.
+// Private stats page: mailing-list subscribers, downloads and YouTube plays/clicks on the site.
+// Songs and their files are managed on songs.php. Sign-in and the page frame are in admin-common.php.
 //   GET admin.php                     → dashboard (or the sign-in form)
 //   GET admin.php?export=subscribers  → subscribers as a CSV file
 
 declare(strict_types=1);
 
-require __DIR__ . '/db.php';
-
-header('X-Robots-Tag: noindex, nofollow');
-header('Cache-Control: no-store');
-header("Content-Security-Policy: frame-ancestors 'none'");
-header('Referrer-Policy: same-origin');
-
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path' => '/',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-    'httponly' => true,
-    'samesite' => 'Strict'
-]);
-session_name('reece_admin');
-session_start();
-
-function h(?string $value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// Returns the admin password, or '' with $problem saying why the page is switched off.
-function adminPassword(?string &$problem): string
-{
-    $path = dirname(__DIR__) . '/config.php';
-    // Hosts can cache PHP files for a while; make sure a just-saved config.php is read fresh.
-    if (function_exists('opcache_invalidate')) @opcache_invalidate($path, true);
-    try {
-        $admin = siteConfig()['admin'] ?? null;
-    } catch (Throwable $error) {
-        $problem = is_file($path)
-            // Only the line number: the parser's message can quote the file's passwords.
-            ? 'config.php has a mistake on or just before line ' . $error->getLine() . ' (often a missing comma).'
-            : 'There is no config.php in public_html.';
-        return '';
-    }
-    $password = (string) ($admin['password'] ?? '');
-    if (!is_array($admin)) $problem = 'config.php in public_html has no \'admin\' section.';
-    elseif ($password === '' || str_contains($password, 'replace-with-')) $problem = 'The \'admin\' password in config.php is empty or still the placeholder.';
-    else return $password;
-    return '';
-}
-
-$problem = null;
-$password = adminPassword($problem);
-$error = '';
-
-if (isset($_GET['logout'])) {
-    $_SESSION = [];
-    session_destroy();
-    header('Location: admin.php');
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $password !== '' && isset($_POST['password'])) {
-    if (hash_equals($password, (string) $_POST['password'])) {
-        session_regenerate_id(true);
-        $_SESSION['admin'] = true;
-        header('Location: admin.php');
-        exit;
-    }
-    sleep(2); // slows down password guessing
-    $error = 'That password is not right.';
-}
-
-$signedIn = $password !== '' && !empty($_SESSION['admin']);
-$_SESSION['csrf'] ??= bin2hex(random_bytes(16));
+require __DIR__ . '/admin-common.php';
+require __DIR__ . '/catalog.php';
 
 // Same address in any letter case or with stray spaces counts as one subscriber.
 const SAME_EMAIL = 'LOWER(TRIM(keep.email)) = LOWER(TRIM(extra.email))';
 
-if ($signedIn && ($_POST['action'] ?? '') === 'dedupe' && hash_equals($_SESSION['csrf'], (string) ($_POST['csrf'] ?? ''))) {
+if ($signedIn && ($_POST['action'] ?? '') === 'dedupe' && validCsrf()) {
     try {
         $pdo = db();
         // Keep each person's first signup (lowest id) and delete the later copies.
@@ -90,16 +24,14 @@ if ($signedIn && ($_POST['action'] ?? '') === 'dedupe' && hash_equals($_SESSION[
         // Make sure the database refuses repeats from now on (tables made by hand may lack this).
         $hasUnique = $pdo->query("SHOW INDEX FROM mailing_list_subscribers WHERE Column_name = 'email' AND Non_unique = 0")->fetch();
         if (!$hasUnique) $pdo->exec('ALTER TABLE mailing_list_subscribers ADD UNIQUE KEY uq_mailing_list_email (email)');
-        $_SESSION['flash'] = $removed === 1 ? 'Removed 1 duplicate subscriber.' : "Removed {$removed} duplicate subscribers.";
+        flash($removed === 1 ? 'Removed 1 duplicate subscriber.' : "Removed {$removed} duplicate subscribers.");
     } catch (Throwable $exception) {
         error_log('Removing duplicate subscribers failed: ' . $exception->getMessage());
-        $_SESSION['flash'] = 'Something went wrong while removing duplicates. The list below shows what is on it now.';
+        flash('Something went wrong while removing duplicates. The list below shows what is on it now.', 'error');
     }
-    header('Location: admin.php');
-    exit;
+    redirect('admin.php');
 }
-$flash = $_SESSION['flash'] ?? '';
-unset($_SESSION['flash']);
+$flash = takeFlash();
 
 if ($signedIn && ($_GET['export'] ?? '') === 'subscribers') {
     $rows = db()->query('SELECT email, source, subscribed_at FROM mailing_list_subscribers ORDER BY subscribed_at DESC')->fetchAll();
@@ -143,7 +75,7 @@ if ($signedIn) {
 
         // Every song in the catalog gets a row, downloaded or not; songs since removed from it still show by id.
         $songs = [];
-        foreach (json_decode((string) @file_get_contents(dirname(__DIR__) . '/data/midi-songs.json'), true) ?: [] as $song) {
+        foreach (catalog() as $song) {
             $songs[$song['id']] = ['title' => $song['title'], 'artist' => $song['artist'], 'midi' => 0, 'pdf' => 0, 'musicxml' => 0,
                 'total' => 0, 'recent' => 0, 'last_download' => null];
         }
@@ -166,55 +98,8 @@ foreach (['sight-and-sound' => 'Sight & Sound', 'learn' => 'Play it yourself', '
     $pageNames["/pages/$file.html"] = $name;
     $pageNames["/$file.html"] = $name;
 }
+pageStart('Stats', 'admin.php', $signedIn);
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <title>Admin | Reece Music</title>
-  <link rel="icon" type="image/png" href="../images/reece-favicon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/reece.css?v=2026-11-admin-link">
-  <style>
-    .admin { padding: clamp(40px, 6vw, 72px) 0 96px; }
-    .admin-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 40px; }
-    .admin h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 56px 0 18px; }
-    .admin h2 small { font-family: var(--body); font-size: 1rem; color: var(--muted); margin-left: 10px; }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
-    .stat strong { display: block; font-family: var(--display); font-size: 2.4rem; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; }
-    .stat span { color: var(--muted); font-size: .95rem; }
-    .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
-    table { width: 100%; border-collapse: collapse; font-size: .98rem; }
-    th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    th { color: var(--muted); font-weight: 500; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; background: var(--surface); }
-    tr:last-child td { border-bottom: 0; }
-    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    td a { color: var(--accent); }
-    .when { white-space: nowrap; color: var(--muted); }
-    .empty-row td { color: var(--muted); text-align: center; padding: 28px; }
-    .notice { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; padding: 16px 20px; max-width: 62ch; }
-    .login { max-width: 380px; }
-    .login label { display: block; margin: 24px 0 8px; color: var(--muted); }
-    .login input { width: 100%; padding: 12px 14px; font: inherit; color: var(--mist); background: var(--surface); border: 1px solid rgba(207, 216, 220, .35); border-radius: 10px; }
-    .login .btn { margin-top: 16px; }
-    .error { color: #F29C9C; margin-top: 12px; }
-  </style>
-</head>
-<body>
-  <header class="site-header">
-    <div class="wrap">
-      <a class="wordmark" href="../index.html">Reece <span>Music</span></a>
-      <?php if ($signedIn): ?><a class="text-link" href="admin.php?logout=1">Sign out</a><?php endif; ?>
-    </div>
-  </header>
-
-  <main class="admin">
-    <div class="wrap">
 <?php if ($password === ''): ?>
       <h1>Admin</h1>
       <p class="notice" style="margin-top:32px">The admin page is switched off. <?= h($problem) ?><br>To switch it on, add a password to <code>public_html/config.php</code> on the server:<br><code>'admin' =&gt; ['password' =&gt; 'your-password-here'],</code></p>
@@ -224,7 +109,7 @@ foreach (['sight-and-sound' => 'Sight & Sound', 'learn' => 'Play it yourself', '
         <h1>Admin</h1>
         <label for="password">Password</label>
         <input id="password" type="password" name="password" autocomplete="current-password" required autofocus>
-        <?php if ($error): ?><p class="error" role="alert"><?= h($error) ?></p><?php endif; ?>
+        <?php if ($loginError): ?><p class="error" role="alert"><?= h($loginError) ?></p><?php endif; ?>
         <button class="btn btn-brass" type="submit">Sign in</button>
       </form>
 <?php elseif ($dbError): ?>
@@ -250,7 +135,7 @@ foreach (['sight-and-sound' => 'Sight & Sound', 'learn' => 'Play it yourself', '
         <?php if ($data['subscribers']): ?><a class="btn btn-ghost" href="admin.php?export=subscribers">Download CSV</a><?php endif; ?>
       </div>
 <?php if ($flash): ?>
-      <p class="notice" role="status" style="margin-bottom:18px"><?= h($flash) ?></p>
+      <p class="notice<?= $flash['kind'] === 'error' ? ' is-error' : '' ?>" role="status" style="margin-bottom:18px"><?= h($flash['message']) ?></p>
 <?php endif; ?>
 <?php if ($data['duplicates']): ?>
       <form class="notice" method="post" action="admin.php" style="margin-bottom:18px" onsubmit="return confirm('Remove <?= $data['duplicates'] ?> duplicate subscriber(s)? Each person keeps their first signup.')">
@@ -284,7 +169,7 @@ foreach (['sight-and-sound' => 'Sight & Sound', 'learn' => 'Play it yourself', '
           <thead><tr><th>Song</th><th>Artist</th><th class="num">MIDI</th><th class="num">PDF</th><th class="num">MusicXML</th><th class="num">Last 30 days</th><th class="num">Total</th><th>Last download</th></tr></thead>
           <tbody>
 <?php if (!$data['songs']): ?>
-            <tr class="empty-row"><td colspan="8">No songs on the list yet (data/midi-songs.json).</td></tr>
+            <tr class="empty-row"><td colspan="8">No songs yet. Add them on the <a href="songs.php">Songs</a> page.</td></tr>
 <?php endif; ?>
 <?php foreach ($data['songs'] as $id => $row): ?>
             <tr>
@@ -346,7 +231,4 @@ arsort($byName);
       </div>
 <?php endif; ?>
 <?php endif; ?>
-    </div>
-  </main>
-</body>
-</html>
+<?php pageEnd(); ?>

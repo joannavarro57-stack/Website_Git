@@ -219,8 +219,9 @@
     pdf: { short: "PDF", title: "Sheet music (PDF)", note: "Print it, or read it on a tablet", button: "Download PDF" },
     musicxml: { short: "MusicXML", title: "Sheet music (MusicXML)", note: "Open and edit it in MuseScore, Sibelius, Finale or Dorico", button: "Download MusicXML" }
   };
+  // Only the files that are actually uploaded; a song can be listed before they are.
   var songFormats = function (s) {
-    return (s.formats || ["midi"]).filter(function (f) { return DOWNLOADS[f]; });
+    return (s.formats || []).filter(function (f) { return DOWNLOADS[f]; });
   };
   var paypal = /^https:\/\/(www\.)?(paypal\.com|paypal\.me)\//.test(cfg.paypal || "") ? cfg.paypal : "";
   var donateBtn = function (cls) {
@@ -249,7 +250,9 @@
               "<h3>" + escapeHtml(s.title) + "</h3>" +
               '<span class="muted song-artist">' + escapeHtml(s.artist) + "</span>" +
               "<p>" + escapeHtml(s.description) + "</p>" +
-              '<span class="song-prices">Free ' + songFormats(s).map(function (f) { return DOWNLOADS[f].short; }).join(" · ") +
+              '<span class="song-prices">' + (songFormats(s).length
+                ? "Free " + songFormats(s).map(function (f) { return DOWNLOADS[f].short; }).join(" · ")
+                : "Files coming soon") +
                 (safeYt(s.youtubeId) ? " · Video tutorial" : "") + "</span>" +
               '<div class="btn-row"><a class="btn btn-brass" href="' + songHref(s.id) + '">Get the files</a></div>' +
             "</article>";
@@ -276,14 +279,15 @@
         var yt = safeYt(s.youtubeId);
         var video = yt
           ? '<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/' + yt + '?rel=0" title="' + escapeHtml(s.title) + ' tutorial" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>'
-          : '<div class="empty"><div class="vinyl-mini" aria-hidden="true"></div><div><h3>Tutorial video coming soon</h3><p>The files are ready to download now.</p></div></div>';
+          : '<div class="empty"><div class="vinyl-mini" aria-hidden="true"></div><div><h3>Tutorial video coming soon</h3><p>' +
+            (songFormats(s).length ? "The files are ready to download now." : "Check back soon for the files and the video.") + "</p></div></div>";
         var downloads = songFormats(s).map(function (f, i) {
           var d = DOWNLOADS[f];
           return "<li" + (i === 0 ? ' class="is-featured"' : "") + "><div><strong>" + d.title + '</strong><span class="muted">' + d.note + "</span></div>" +
             '<span class="tier-price">Free</span>' +
             '<a class="btn ' + (i === 0 ? "btn-brass" : "btn-ghost") + '" href="/php/midi.php?action=download&amp;id=' + encodeURIComponent(s.id) +
               "&amp;format=" + f + '">' + d.button + "</a></li>";
-        }).join("");
+        }).join("") || '<li><div><strong>Downloads coming soon</strong><span class="muted">The MIDI and sheet music for this song are on the way</span></div></li>';
         songRoot.innerHTML =
           '<section class="page-hero"><div class="wrap">' +
             '<a class="text-link" href="learn.html">All songs</a>' +
