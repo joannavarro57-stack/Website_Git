@@ -547,13 +547,13 @@ p { margin: 0 0 1em; max-width: 62ch; }
 /* ---------- floating globe: a little Earth with orbiting satellites in the corner (drawn by js/globe.js) ---------- */
 /* No frame and no controls: it hangs in the air over the page, and clicks pass straight through it. */
 .page-player {
-  position: fixed; right: 14px; bottom: 10px; z-index: 40; width: 300px; pointer-events: none;
+  position: fixed; right: 14px; bottom: 10px; z-index: 40; width: 360px; pointer-events: none;
   opacity: 0; transform: translateY(16px) scale(.96);
   transition: opacity .35s ease, transform .35s cubic-bezier(.16, .84, .24, 1);
 }
 .page-player.is-shown { opacity: 1; transform: none; }
 .pp-viz {
-  display: block; width: calc(100% + 32px); height: 240px; margin: 0 -16px; /* equal overhang keeps the globe centred */
+  display: block; width: calc(100% + 32px); height: 288px; margin: 0 -16px; /* equal overhang keeps the globe centred */
   filter: drop-shadow(0 0 5px rgba(118, 219, 227, .35));
 }
 @media (max-width: 760px) {

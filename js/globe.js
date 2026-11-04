@@ -28,7 +28,7 @@
       // over the poles and all around the sphere, and each orbit's plane slowly drifts round. The Earth is a wire mesh.
       // Satellites pass behind the see-through globe and come round in front of it; the scene fades out at both sides, so it has no edge.
       var viz = el.querySelector(".pp-viz"), ctx = viz.getContext && viz.getContext("2d"), vw = 0, vh = 0, lvl = 0.3;
-      var spin = 0, turn = 0;
+      var spin = 0, turn = 0, grow = 1; // grow: how much bigger than the original 64px globe it is drawn (1.2 on desktop)
       var VIEW = -0.32; // the camera looks down on the globe a little
       var ORBITS = [55, 55, 55, 55, 55, 55, 85, 20].map(function (deg, i) {
         return { incline: deg * Math.PI / 180, node: i * Math.PI / 3 + (i > 5 ? 0.8 : 0), size: 1.32 + (i % 3) * 0.14, sats: i > 5 ? 2 : 3, offset: i * 1.1, rate: 1 + (i % 3) * 0.18 };
@@ -65,6 +65,7 @@
       };
       var satellite = function (x, y, angle, scale, alpha) {
         ctx.save();
+        scale *= grow;
         ctx.translate(x, y); ctx.rotate(angle); ctx.globalAlpha = alpha;
         ctx.fillStyle = "#6FB4E6"; // solar panels
         ctx.fillRect(-7.5 * scale, -1.6 * scale, 5 * scale, 3.2 * scale);
@@ -90,10 +91,50 @@
           o.notes.push(line);
         }
       });
+      // and one satellite, picked at random, trails the name instead, written along its orbit
+      var WORD = "Reece Music";
+      (function () {
+        var o = ORBITS[Math.floor(Math.random() * ORBITS.length)];
+        o.notes[Math.floor(Math.random() * o.sats)] = WORD;
+      })();
+      var SYMBOL_FONT = 'px "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", serif';
+      var WORD_FONT = 'px "Hanken Grotesk", "Poppins", system-ui, sans-serif';
+      // Lays str out along the orbit behind the satellite, spacing the letters by their real width on screen (not by
+      // angle), so the name stays evenly spaced even where the orbit is seen side-on. Returns each letter's orbit
+      // position (x, y, z) and the angle of the orbit there, in order from the satellite backwards.
+      var layWord = function (o, th, r, drift, str) {
+        ctx.font = "600 " + 9 * grow + WORD_FONT;
+        var out = [], step = 0.01, prev = orbitPoint(o, th, r, drift), cur, travelled = 0, u = 0;
+        var target = 6, i = 0, w = ctx.measureText(str.charAt(0)).width * 1.08;
+        target += w / 2;
+        while (i < str.length && u < 2 * Math.PI) {
+          u += step;
+          cur = orbitPoint(o, th - u, r, drift);
+          var seg = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+          if (travelled + seg >= target) {
+            var f = seg ? (target - travelled) / seg : 0;
+            out.push({
+              x: prev.x + (cur.x - prev.x) * f, y: prev.y + (cur.y - prev.y) * f, z: prev.z + (cur.z - prev.z) * f,
+              ang: Math.atan2(prev.y - cur.y, cur.x - prev.x), ch: str.charAt(i)
+            });
+            i++;
+            var w2 = i < str.length ? ctx.measureText(str.charAt(i)).width * 1.08 : 0;
+            target += w / 2 + w2 / 2; w = w2;
+            u -= step; continue; // the next letter may land on this same stretch
+          }
+          travelled += seg; prev = cur;
+        }
+        return out;
+      };
       var note = function (n) {
         ctx.globalAlpha = n.alpha;
-        ctx.font = Math.round(n.size) + 'px "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", serif';
-        ctx.fillText(n.glyph, n.x, n.y);
+        ctx.font = (n.word ? "600 " : "") + Math.round(n.size * grow * 2) / 2 + (n.word ? WORD_FONT : SYMBOL_FONT);
+        if (n.word) {
+          ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.rot);
+          ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(8, 10, 22, .55)"; ctx.strokeText(n.glyph, 0, 0); // keeps it readable over the globe
+          ctx.fillText(n.glyph, 0, 0);
+          ctx.restore();
+        } else ctx.fillText(n.glyph, n.x, n.y);
       };
       var segment = function (s) {
         ctx.globalAlpha = s.alpha;
@@ -103,7 +144,8 @@
         if (!ctx) return;
         if (!vw) sizeViz();
         if (!vw) return;
-        var cx = vw / 2, cy = vh / 2, R = Math.min(vh * 0.27, 64), drift = turn * 1.5;
+        var cx = vw / 2, cy = vh / 2, R = Math.min(vh * 0.27, 77), drift = turn * 1.5;
+        grow = Math.max(1, R / 64);
         spin += dt * (0.00007 + level * level * 0.0005);
         turn += dt * (0.00012 + level * level * 0.0008);
         ctx.globalAlpha = 1;
@@ -133,7 +175,20 @@
               });
               prev = c;
             }
-            if (o.notes[k]) for (var j = 0; j < TRAIL; j++) {
+            if (o.notes[k] === WORD) {
+              // the name, letter by letter along the orbit; each letter leans with the curve, and the word flips
+              // round whenever the satellite heads left, so it always reads left to right and the right way up
+              var placed = layWord(o, th, r, drift, WORD);
+              if (placed[placed.length - 1].x < placed[0].x) placed = layWord(o, th, r, drift, WORD.split("").reverse().join(""));
+              var forward = placed[placed.length - 1].x > placed[0].x;
+              placed.forEach(function (L) {
+                var ang = L.ang + (forward ? 0 : Math.PI), dz = L.z / r;
+                (L.z > 0 ? nearNotes : farNotes).push({
+                  x: cx + L.x, y: cy - L.y, rot: ang, word: true, glyph: L.ch,
+                  size: (L.z > 0 ? 8.5 + 1.5 * dz : 7 + 0.8 * (1 + dz)), alpha: L.z > 0 ? 0.95 : 0.35
+                });
+              });
+            } else if (o.notes[k]) for (var j = 0; j < TRAIL; j++) {
               var q = orbitPoint(o, th - (j + 1) * TRAIL_GAP, r, drift), d = q.z / r;
               (q.z > 0 ? nearNotes : farNotes).push({
                 x: cx + q.x, y: cy - q.y, glyph: o.notes[k][j],
