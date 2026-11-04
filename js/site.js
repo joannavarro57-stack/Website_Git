@@ -33,6 +33,219 @@
     document.querySelectorAll(".video-set-title").forEach(function (t) { saber.observe(t); });
   }
 
+  /* ---------- floating globe: a little Earth with orbiting satellites in the corner ---------- */
+  // Purely decorative (no controls, and clicks pass straight through). It turns slowly while you read and speeds up
+  // as you scroll, and only animates while it's showing and the tab is open.
+  (function () {
+    if (document.querySelectorAll("main > section").length < 2) return;
+    var el = document.createElement("div");
+    el.className = "page-player";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = '<canvas class="pp-viz"></canvas>';
+    document.body.appendChild(el);
+    var lastY = window.scrollY, speed = 0, raf = 0;
+    var update = function () { el.classList.toggle("is-shown", window.scrollY > 160); };
+
+    // The visualizer: a small Earth with satellites circling it on crossing orbits, after Reece's constellation
+    // picture. The orbits are real 3D circles at steep, varied tilts (like a GPS constellation), so satellites fly
+    // over the poles and all around the sphere, and each orbit's plane slowly drifts round.
+    // Satellites pass behind the globe and come round in front of it; the scene fades out at both sides, so it has no edge.
+    var viz = el.querySelector(".pp-viz"), ctx = viz.getContext && viz.getContext("2d"), vw = 0, vh = 0, lvl = 0.3;
+    var spin = 0, turn = 0;
+    var VIEW = -0.32; // the camera looks down on the globe a little
+    var ORBITS = [55, 55, 55, 55, 55, 55, 85, 20].map(function (deg, i) {
+      return { incline: deg * Math.PI / 180, node: i * Math.PI / 3 + (i > 5 ? 0.8 : 0), size: 1.32 + (i % 3) * 0.14, sats: i > 5 ? 2 : 3, offset: i * 1.1, rate: 1 + (i % 3) * 0.18 };
+    });
+    // a point on an orbit, as screen x/y plus depth (z > 0 is the side facing you)
+    var orbitPoint = function (o, th, r, drift) {
+      var x = r * Math.cos(th), y0 = r * Math.sin(th);
+      var y = y0 * Math.cos(o.incline), z = y0 * Math.sin(o.incline);
+      var node = o.node + drift, X = x * Math.cos(node) + z * Math.sin(node), Z = -x * Math.sin(node) + z * Math.cos(node);
+      return { x: X, y: y * Math.cos(VIEW) - Z * Math.sin(VIEW), z: y * Math.sin(VIEW) + Z * Math.cos(VIEW) };
+    };
+    // fixed, so the sky and the continents look the same on every visit
+    var STARS = [], LAND;
+    for (var n = 0; n < 24; n++) STARS.push([(n * 0.618) % 1, (n * 0.377 + 0.13) % 1, n * 1.7]);
+    // rough continent outlines as [longitude, latitude] in degrees: plenty at this size to read as the Earth
+    LAND = [
+      [[-168, 66], [-156, 71], [-130, 70], [-95, 72], [-80, 73], [-62, 60], [-55, 52], [-66, 45], [-75, 35], [-81, 25], [-97, 26], [-97, 18], [-87, 15], [-83, 9], [-79, 8], [-92, 15], [-105, 20], [-117, 32], [-124, 40], [-124, 48], [-135, 58], [-152, 58], [-165, 62]],
+      [[-52, 60], [-42, 60], [-22, 70], [-20, 82], [-45, 83], [-60, 78], [-55, 70]],
+      [[-80, 9], [-72, 12], [-60, 10], [-50, 0], [-35, -6], [-39, -15], [-48, -26], [-58, -38], [-65, -42], [-68, -55], [-74, -50], [-72, -35], [-71, -18], [-81, -5]],
+      [[-10, 36], [-9, 43], [-2, 44], [-5, 48], [3, 51], [8, 54], [10, 58], [5, 62], [15, 69], [28, 71], [40, 68], [30, 60], [30, 46], [28, 41], [22, 37], [15, 40], [12, 44], [5, 43], [-5, 36]],
+      [[28, 41], [36, 36], [35, 30], [43, 13], [52, 17], [58, 24], [66, 25], [72, 20], [77, 8], [80, 15], [88, 22], [92, 20], [98, 16], [100, 3], [104, 1], [106, 10], [109, 21], [117, 24], [122, 30], [121, 40], [127, 39], [130, 43], [141, 46], [142, 53], [136, 55], [150, 60], [160, 62], [163, 70], [180, 69], [180, 72], [140, 74], [110, 77], [80, 73], [68, 70], [55, 69], [44, 67], [40, 68], [30, 60], [30, 46]],
+      [[-17, 15], [-17, 21], [-10, 30], [-6, 36], [10, 37], [20, 32], [32, 31], [34, 28], [43, 12], [51, 12], [40, -5], [40, -15], [35, -24], [27, -34], [19, -35], [13, -20], [12, -6], [9, 4], [-8, 4], [-14, 10]],
+      [[114, -22], [122, -18], [130, -12], [137, -12], [142, -11], [146, -19], [153, -26], [150, -37], [141, -38], [135, -35], [129, -32], [115, -35], [113, -26]],
+      [[44, -12], [50, -15], [49, -25], [44, -24]],
+      [[130, 31], [140, 35], [142, 41], [140, 44], [136, 36]],
+      [[-6, 50], [2, 51], [-3, 58], [-6, 56]]
+    ];
+    var ICE = [], CLOUDS = [];
+    for (var q = 0; q <= 24; q++) ICE.push([q * 15 - 180, -68]);
+    for (var ci = 0; ci < 9; ci++) CLOUDS.push({ lon: ci * 40, lat: Math.sin(ci * 1.9) * 50, w: 0.22 + (ci % 3) * 0.08 });
+    var GLOBE_TILT = 0.38; // the north pole leans towards you
+    var sizeViz = function () {
+      var r = viz.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+      vw = r.width; vh = r.height;
+      viz.width = Math.round(vw * dpr); viz.height = Math.round(vh * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    var satellite = function (x, y, angle, scale, alpha) {
+      ctx.save();
+      ctx.translate(x, y); ctx.rotate(angle); ctx.globalAlpha = alpha;
+      ctx.fillStyle = "#6FB4E6"; // solar panels
+      ctx.fillRect(-7.5 * scale, -1.6 * scale, 5 * scale, 3.2 * scale);
+      ctx.fillRect(2.5 * scale, -1.6 * scale, 5 * scale, 3.2 * scale);
+      ctx.fillStyle = "#E9C46A"; // gold body
+      ctx.fillRect(-2.2 * scale, -2.2 * scale, 4.4 * scale, 4.4 * scale);
+      ctx.restore();
+    };
+    // the far (front = false) or near (front = true) part of an orbit's ring
+    var ring = function (cx, cy, o, r, drift, front, alpha) {
+      ctx.beginPath();
+      var prev = null;
+      for (var a = 0; a <= 64; a++) {
+        var p = orbitPoint(o, a / 64 * 2 * Math.PI, r, drift), on = (p.z > 0) === front;
+        if (on && prev) ctx.lineTo(cx + p.x, cy - p.y);
+        else if (on) ctx.moveTo(cx + p.x, cy - p.y);
+        prev = on ? p : null;
+      }
+      ctx.strokeStyle = "rgba(207, 236, 240, " + alpha + ")"; ctx.lineWidth = 1; ctx.stroke();
+    };
+    var drawViz = function (dt, level, t) {
+      if (!ctx) return;
+      if (!vw) sizeViz();
+      if (!vw) return;
+      var cx = vw / 2, cy = vh / 2, R = Math.min(vh * 0.27, 64), drift = turn * 1.5;
+      spin += dt * (0.00007 + level * level * 0.0005);
+      turn += dt * (0.00012 + level * level * 0.0008);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.clearRect(0, 0, vw, vh);
+      STARS.forEach(function (s) {
+        ctx.fillStyle = "rgba(207, 216, 220, " + (0.3 + 0.25 * Math.sin(t / 700 + s[2])).toFixed(2) + ")";
+        ctx.fillRect(s[0] * vw, s[1] * vh, 1, 1);
+      });
+
+      // where every satellite is, and whether it's on the near or far side of the globe
+      var near = [], far = [];
+      ORBITS.forEach(function (o) {
+        for (var k = 0; k < o.sats; k++) {
+          var th = spin * o.rate + o.offset + k * 2 * Math.PI / o.sats;
+          var a = orbitPoint(o, th, R * o.size, drift), b = orbitPoint(o, th + 0.02, R * o.size, drift);
+          var p = { x: cx + a.x, y: cy - a.y, z: a.z / (R * o.size), angle: Math.atan2(a.y - b.y, b.x - a.x) };
+          // hidden while it passes right behind the globe
+          if (a.z < 0 && a.x * a.x + a.y * a.y < R * R) continue;
+          (a.z > 0 ? near : far).push(p);
+        }
+      });
+
+      // far halves of the orbits and the satellites on them, then the globe over them
+      ORBITS.forEach(function (o) { ring(cx, cy, o, R * o.size, drift, false, 0.16); });
+      far.forEach(function (p) { satellite(p.x, p.y, p.angle, 0.62 + 0.18 * (1 + p.z), 0.5); });
+
+      var air = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.55);
+      air.addColorStop(0, "rgba(118, 219, 227, .4)"); air.addColorStop(1, "rgba(118, 219, 227, 0)");
+      ctx.fillStyle = air;
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.55, 0, 2 * Math.PI); ctx.fill();
+      var sea = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
+      sea.addColorStop(0, "#4FA3DA"); sea.addColorStop(0.45, "#1F63B0"); sea.addColorStop(0.85, "#123A7E"); sea.addColorStop(1, "#0A1D4A");
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.fillStyle = sea; ctx.fill(); ctx.clip();
+      // the Earth turns under the camera: a point at a longitude/latitude, as screen x/y and whether it faces you.
+      // Points round the back are pulled to the rim, so continents crossing the edge wrap neatly round it.
+      var spinLon = turn * 1.2;
+      var globePoint = function (lon, lat, out) {
+        var la = lat * Math.PI / 180, lo = lon * Math.PI / 180 + spinLon;
+        var x = Math.cos(la) * Math.sin(lo), y = Math.sin(la), z = Math.cos(la) * Math.cos(lo);
+        var Y = y * Math.cos(GLOBE_TILT) - z * Math.sin(GLOBE_TILT), Z = y * Math.sin(GLOBE_TILT) + z * Math.cos(GLOBE_TILT);
+        if (Z < 0) { var k = 1 / Math.max(1e-6, Math.sqrt(x * x + Y * Y)); x *= k; Y *= k; }
+        out.x = cx + x * R; out.y = cy - Y * R; out.front = Z >= 0;
+        return out;
+      };
+      var pt = {};
+      var shape = function (points, fill) {
+        var shown = false;
+        ctx.beginPath();
+        points.forEach(function (ll, i) {
+          globePoint(ll[0], ll[1], pt);
+          if (pt.front) shown = true;
+          if (i) ctx.lineTo(pt.x, pt.y); else ctx.moveTo(pt.x, pt.y);
+        });
+        if (!shown) return;
+        ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+      };
+      // faint lines of latitude and longitude
+      ctx.strokeStyle = "rgba(190, 240, 250, .13)"; ctx.lineWidth = 0.6;
+      for (var mer = -180; mer < 180; mer += 30) {
+        ctx.beginPath(); var on = false;
+        for (var la2 = -90; la2 <= 90; la2 += 6) { globePoint(mer, la2, pt); if (pt.front && on) ctx.lineTo(pt.x, pt.y); else ctx.moveTo(pt.x, pt.y); on = pt.front; }
+        ctx.stroke();
+      }
+      for (var par = -60; par <= 60; par += 30) {
+        ctx.beginPath(); var on2 = false;
+        for (var lo2 = -180; lo2 <= 180; lo2 += 6) { globePoint(lo2, par, pt); if (pt.front && on2) ctx.lineTo(pt.x, pt.y); else ctx.moveTo(pt.x, pt.y); on2 = pt.front; }
+        ctx.stroke();
+      }
+      // continents, polar ice, and a few clouds drifting a little faster than the ground
+      var landFill = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
+      landFill.addColorStop(0, "#8DB36A"); landFill.addColorStop(0.5, "#4E9A57"); landFill.addColorStop(1, "#A9925B");
+      LAND.forEach(function (l, i) { shape(l, i === 1 ? "rgba(236, 246, 248, .9)" : landFill); });
+      shape(ICE, "rgba(236, 246, 248, .9)");
+      shape([[-180, 78], [-90, 78], [0, 78], [90, 78], [180, 78], [180, 90], [-180, 90]], "rgba(236, 246, 248, .85)");
+      CLOUDS.forEach(function (cl) {
+        globePoint(cl.lon + turn * 22, cl.lat, pt);
+        if (!pt.front) return;
+        ctx.fillStyle = "rgba(255, 255, 255, .28)";
+        ctx.beginPath(); ctx.ellipse(pt.x, pt.y, R * cl.w, R * cl.w * 0.32, 0, 0, 2 * Math.PI); ctx.fill();
+      });
+      // sunlight glinting off the ocean
+      var glint = ctx.createRadialGradient(cx - R * 0.4, cy - R * 0.42, 0, cx - R * 0.4, cy - R * 0.42, R * 0.7);
+      glint.addColorStop(0, "rgba(255, 255, 255, .45)"); glint.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = glint; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      // night side and a thin bright rim
+      var shade = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+      shade.addColorStop(0.5, "rgba(4, 5, 14, 0)"); shade.addColorStop(1, "rgba(4, 5, 14, .62)");
+      ctx.fillStyle = shade; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+      ctx.strokeStyle = "rgba(162, 232, 238, .55)"; ctx.lineWidth = 1; ctx.stroke();
+
+      // near halves of the orbits and their satellites, in front of the globe
+      ORBITS.forEach(function (o) { ring(cx, cy, o, R * o.size, drift, true, 0.38); });
+      near.sort(function (a, b) { return a.z - b.z; });
+      near.forEach(function (p) { satellite(p.x, p.y, p.angle, 0.8 + 0.25 * p.z, 1); });
+
+      // fade out both sides, so the scene floats with no edge
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "destination-in";
+      var fade = ctx.createLinearGradient(0, 0, vw, 0);
+      fade.addColorStop(0, "rgba(0,0,0,0)"); fade.addColorStop(0.16, "#000"); fade.addColorStop(0.84, "#000"); fade.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = fade;
+      ctx.fillRect(0, 0, vw, vh);
+    };
+
+    var last = 0;
+    var tick = function (t) {
+      var dt = last ? Math.min(64, t - last) : 16;
+      last = t;
+      var y = window.scrollY;
+      speed = speed * 0.88 + Math.abs(y - lastY) / dt * 0.12;
+      lastY = y;
+      // a slow idle orbit that speeds up with scrolling, eased so it never jumps
+      lvl += (Math.min(1, 0.42 + speed / 1.4) - lvl) * 0.06;
+      drawViz(dt, lvl, t);
+      if (!reduceMotion && !document.hidden && el.classList.contains("is-shown")) raf = requestAnimationFrame(tick);
+      else { raf = 0; last = 0; }
+    };
+    var wake = function () { if (!raf) raf = requestAnimationFrame(tick); };
+
+    window.addEventListener("scroll", function () { update(); wake(); }, { passive: true });
+    window.addEventListener("resize", function () { vw = 0; update(); wake(); });
+    document.addEventListener("visibilitychange", wake);
+    update();
+    wake();
+  })();
+
   /* ---------- mobile menu ---------- */
   var menuBtn = document.querySelector(".menu-btn");
   var nav = document.getElementById("site-nav");

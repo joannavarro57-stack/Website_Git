@@ -180,7 +180,7 @@ function pageStart(string $title, string $active, bool $signedIn): void
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/reece.css?v=2026-11-saber">
+  <link rel="stylesheet" href="../css/reece.css?v=2026-11-globe-4">
   <link rel="stylesheet" href="../css/admin.css?v=2026-11-users">
 </head>
 <body>
