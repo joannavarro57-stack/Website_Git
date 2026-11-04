@@ -43,40 +43,60 @@
     var status = sleeve.querySelector(".sleeve-status");
     var openLink = sleeve.querySelector("[data-spotify-open]");
     if (openLink) openLink.href = cfg.spotify;
+    var say = function (t) { if (status) status.textContent = t; };
 
     var setPlaying = function (playing) {
       sleeve.classList.toggle("is-playing", playing);
       if (vinyl) vinyl.classList.toggle("is-spinning", playing);
-      if (status) status.textContent = playing ? "Now playing" : "Press play";
+      say(playing ? "Now playing" : "Press play");
     };
 
+    var done = false;            // a player is on screen
+    var timers = [];
+    var finish = function () { done = true; host.classList.remove("is-loading"); timers.forEach(clearTimeout); };
+
+    // Plain Spotify embed: no play/pause events, but works whenever the player API is slow or blocked.
     var plainEmbed = function () {
-      if (!m || host.querySelector("iframe")) return;
+      if (!m || (done && host.querySelector("iframe"))) return;
       var f = document.createElement("iframe");
       f.src = "https://open.spotify.com/embed/" + m[1] + "/" + m[2] + "?utm_source=generator&theme=0";
-      f.height = "152"; f.loading = "lazy"; f.title = "Reece Music on Spotify";
+      f.height = "152"; f.title = "Reece Music on Spotify";
       f.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+      f.addEventListener("load", function () { say("Press play"); });
       host.innerHTML = ""; host.appendChild(f);
+      finish();
+    };
+
+    var withApi = function () {
+      if (done) return;
+      var api = window.__spotify && window.__spotify.api;
+      if (!api) return plainEmbed();
+      var mount = document.createElement("div");
+      host.innerHTML = ""; host.appendChild(mount);
+      api.createController(mount, { uri: "spotify:" + m[1] + ":" + m[2], width: "100%", height: 152 }, function (ctrl) {
+        ctrl.addListener("ready", function () { finish(); say("Press play"); });
+        ctrl.addListener("playback_update", function (e) {
+          setPlaying(!!(e && e.data && !e.data.isPaused && !e.data.isBuffering));
+        });
+      });
+      timers.push(setTimeout(function () { if (!done) plainEmbed(); }, 8000));   // player never got ready
     };
 
     if (m) {
-      var fallbackTimer = setTimeout(plainEmbed, 6000);
-      window.onSpotifyIframeApiReady = function (IFrameAPI) {
-        clearTimeout(fallbackTimer);
-        if (host.querySelector("iframe")) return;
-        var mount = document.createElement("div");
-        host.innerHTML = ""; host.appendChild(mount);
-        IFrameAPI.createController(mount, { uri: "spotify:" + m[1] + ":" + m[2], width: "100%", height: 152 }, function (ctrl) {
-          ctrl.addListener("playback_update", function (e) {
-            setPlaying(!!(e && e.data && !e.data.isPaused && !e.data.isBuffering));
-          });
-        });
-      };
-      var s = document.createElement("script");
-      s.src = "https://open.spotify.com/embed/iframe-api/v1";
-      s.async = true;
-      s.onerror = plainEmbed;
-      document.body.appendChild(s);
+      host.classList.add("is-loading");
+      host.innerHTML = '<div class="player-loading"><span class="player-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Loading Spotify…</div>';
+      say("Loading…");
+      timers.push(setTimeout(function () { if (!done) plainEmbed(); }, 7000));    // player script never arrived
+      var sp = window.__spotify;
+      if (sp && (sp.api || sp.failed)) withApi();
+      else if (sp) sp.waiters.push(withApi);
+      else {                                                                     // page without the early loader
+        window.__spotify = { api: null, failed: false, waiters: [withApi] };
+        window.onSpotifyIframeApiReady = function (api) { window.__spotify.api = api; withApi(); };
+        var s = document.createElement("script");
+        s.src = "https://open.spotify.com/embed/iframe-api/v1"; s.async = true; s.onerror = plainEmbed;
+        document.body.appendChild(s);
+      }
     }
   }
 

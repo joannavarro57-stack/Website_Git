@@ -434,3 +434,13 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .video-soon { display: flex; align-items: center; justify-content: center; gap: 20px; padding: clamp(28px, 5vw, 48px); border: 1px dashed var(--line); text-align: left; }
 .video-soon p { margin: 0; color: var(--muted); }
 .video-soon .vinyl-mini { width: 64px; height: 64px; flex: none; }
+
+/* ---------- Spotify loading state ---------- */
+.player-loading { height: 152px; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: .92rem; }
+.player-bars { display: inline-flex; align-items: flex-end; gap: 3px; height: 18px; }
+.player-bars i { width: 3px; height: 100%; background: var(--accent); border-radius: 2px; transform-origin: bottom; animation: player-eq 1s ease-in-out infinite; }
+.player-bars i:nth-child(2) { animation-delay: -.25s; }
+.player-bars i:nth-child(3) { animation-delay: -.5s; }
+.player-bars i:nth-child(4) { animation-delay: -.75s; }
+@keyframes player-eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .player-bars i { animation: none; transform: scaleY(.6); } }
