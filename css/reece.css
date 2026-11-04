@@ -194,8 +194,8 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .voice h3 em { color: var(--accent); }
 .voice p { color: var(--muted); margin-bottom: 24px; }
 .voice-film {
-  margin: auto 10px 26px 0; padding: 12px; background: var(--accent-deep); border-radius: 26px;
-  box-shadow: 0 0 0 2px var(--accent), 12px 12px 0 0 var(--ink), 12px 12px 0 2px var(--accent-deep);
+  margin: auto 3px 8px 0; padding: 0; background: var(--accent-deep); border-radius: 14px;
+  box-shadow: 0 0 0 1px var(--accent), 3px 3px 0 0 var(--ink), 3px 3px 0 1px var(--accent-deep);
   transform: rotate(-1deg); transition: transform .3s ease;
 }
 .voice-film:hover, .voice-film:focus-within { transform: none; }
